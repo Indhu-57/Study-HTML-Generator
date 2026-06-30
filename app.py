@@ -8,7 +8,16 @@ st.set_page_config(
     page_icon="🎓",
     layout="wide"
 )
+# -----------------------------
+# Supabase Connection
+# -----------------------------
+SUPABASE_URL = st.secrets["https://rminajhgtossrdguchks.supabase.co"]
+SUPABASE_KEY = st.secrets["sb_publishable_qlbKijkbS52ZWuY2RuShvA_YBJ77SIr"]
 
+supabase = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
 st.title("🎓 ILM Generator")
 st.caption("AI-Powered Interactive Learning Material Generator")
 
