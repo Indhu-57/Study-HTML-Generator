@@ -127,8 +127,25 @@ if st.button("🚀 Generate HTML"):
 
         job_id = response.data[0]["id"]
 
-        st.success("✅ Generation Job Created Successfully!")
-        st.info(f"Job ID: {job_id}")
+# ----------------------------------------
+# Upload Study Material
+# ----------------------------------------
+
+extension = study_file.name.split(".")[-1]
+
+storage_path = f"{job_id}.{extension}"
+
+supabase.storage.from_("AMP").upload(
+    path=storage_path,
+    file=study_file.getvalue(),
+    file_options={
+        "content-type": study_file.type
+    }
+)
+
+st.success("✅ Study Material Uploaded!")
+
+st.info(f"Job ID: {job_id}")
 
     except Exception as e:
 
