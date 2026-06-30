@@ -1,5 +1,8 @@
 import streamlit as st
 
+from supabase import create_client
+import uuid
+
 st.set_page_config(
     page_title="ILM Generator",
     page_icon="🎓",
