@@ -11,13 +11,17 @@ st.set_page_config(
 # -----------------------------
 # Supabase Connection
 # -----------------------------
-SUPABASE_URL = st.secrets["https://rminajhgtossrdguchks.supabase.co"]
-SUPABASE_KEY = st.secrets["sb_publishable_qlbKijkbS52ZWuY2RuShvA_YBJ77SIr"]
+# -----------------------------
+# Supabase Connection
+# -----------------------------
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
 supabase = create_client(
     SUPABASE_URL,
     SUPABASE_KEY
 )
+
 st.title("🎓 ILM Generator")
 st.caption("AI-Powered Interactive Learning Material Generator")
 
