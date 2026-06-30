@@ -1,13 +1,21 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="AI Study HTML Generator",
+    page_title="ILM Generator",
+    page_icon="🎓",
     layout="wide"
 )
 
-st.title("📚 AI Interactive Study HTML Generator")
+st.title("🎓 ILM Generator")
+st.caption("AI-Powered Interactive Learning Material Generator")
 
-st.write("Welcome! Your application is now running on Streamlit Community Cloud.")
+st.markdown("""
+Generate interactive learning materials from **PDF, DOCX, and TXT** files using AI.
+The generated content includes definitions, formulae, worked examples, important notes,
+summaries, quizzes, flashcards, and an interactive HTML learning page.
+""")
+
+st.markdown("---")
 
 st.header("Course Information")
 
