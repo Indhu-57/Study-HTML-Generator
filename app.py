@@ -171,6 +171,19 @@ if st.button("🚀 Generate HTML"):
         # ==========================================
         st.success("✅ Generation Job Created Successfully!")
         st.success("✅ Study Material Uploaded Successfully!")
+
+        from extract import extract_pdf_text
+
+text = extract_pdf_text(study_file.getvalue())
+
+st.subheader("Extracted Text Preview")
+
+st.text_area(
+    "First 3000 Characters",
+    text[:3000],
+    height=300
+)
+
         st.success("✅ E-Signature Uploaded Successfully!")
 
         st.info(f"Job ID: {job_id}")
