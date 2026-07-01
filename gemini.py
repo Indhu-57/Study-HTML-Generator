@@ -1,33 +1,48 @@
+import json
 import streamlit as st
 from google import genai
 
-# ---------------------------------------
-# Configure Gemini Client
-# ---------------------------------------
+# ==========================================
+# GEMINI CLIENT
+# ==========================================
 
 client = genai.Client(
     api_key=st.secrets["GEMINI_API_KEY"]
 )
 
-# ---------------------------------------
-# Generate Learning Material
-# ---------------------------------------
+# ==========================================
+# LOAD MASTER PROMPT
+# ==========================================
 
-def generate_learning_material(text):
+def load_prompt():
 
-    prompt = f"""
-You are an expert university professor.
+    with open("prompts/ilm_prompt.txt", "r", encoding="utf-8") as file:
+        return file.read()
 
-Read the study material below and explain it in simple academic English.
 
-Study Material:
+# ==========================================
+# GENERATE LEARNING MATERIAL
+# ==========================================
 
-{text}
+def generate_learning_material(extracted_text):
+
+    master_prompt = load_prompt()
+
+    final_prompt = f"""
+{master_prompt}
+
+==================================================
+
+STUDY MATERIAL
+
+==================================================
+
+{extracted_text}
 """
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=prompt
+        contents=final_prompt
     )
 
     return response.text
