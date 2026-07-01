@@ -198,3 +198,38 @@ if st.button("🚀 Generate HTML"):
 
         st.error("Something went wrong.")
         st.exception(e)
+
+
+# =====================================================
+# DEVELOPER TEST - GEMINI
+# =====================================================
+
+st.divider()
+
+st.subheader("🛠 Developer Test - Gemini")
+
+from gemini import generate_learning_material
+
+sample_text = st.text_area(
+    "Paste some text here",
+    height=200
+)
+
+if st.button("Test Gemini"):
+
+    if sample_text.strip() == "":
+        st.warning("Please enter some text.")
+
+    else:
+
+        with st.spinner("Gemini is thinking..."):
+
+            result = generate_learning_material(sample_text)
+
+        st.success("Response received!")
+
+        st.text_area(
+            "Gemini Response",
+            result,
+            height=400
+        )
