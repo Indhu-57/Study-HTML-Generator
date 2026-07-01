@@ -1,1 +1,1 @@
-# Study-HTML-Generator
+# Study-Material-Generator
