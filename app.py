@@ -1,18 +1,19 @@
 import streamlit as st
 from supabase import create_client
+from storage import upload_file, save_uploaded_file
 
-# =====================================================
+# ==================================================
 # PAGE CONFIGURATION
-# =====================================================
+# ==================================================
 st.set_page_config(
     page_title="ILM Generator",
     page_icon="🎓",
     layout="wide"
 )
 
-# =====================================================
+# ==================================================
 # SUPABASE CONNECTION
-# =====================================================
+# ==================================================
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
@@ -21,22 +22,22 @@ supabase = create_client(
     SUPABASE_KEY
 )
 
-# =====================================================
+# ==================================================
 # TITLE
-# =====================================================
+# ==================================================
 st.title("🎓 ILM Generator")
 st.caption("AI-Powered Interactive Learning Material Generator")
 
-st.markdown("""
+st.write("""
 Generate interactive learning materials from **PDF, DOCX and TXT**
 using Artificial Intelligence.
 """)
 
 st.divider()
 
-# =====================================================
+# ==================================================
 # COURSE INFORMATION
-# =====================================================
+# ==================================================
 st.subheader("Course Information")
 
 instructor = st.text_input(
@@ -64,9 +65,9 @@ topic = st.text_input(
     placeholder="e.g., Travelling Salesman Problem"
 )
 
-# =====================================================
+# ==================================================
 # FILE UPLOADS
-# =====================================================
+# ==================================================
 study_file = st.file_uploader(
     "Upload PDF / DOCX / TXT",
     type=["pdf", "docx", "txt"]
@@ -79,32 +80,32 @@ esign = st.file_uploader(
 
 st.divider()
 
-# =====================================================
+# ==================================================
 # GENERATE BUTTON
-# =====================================================
+# ==================================================
 if st.button("🚀 Generate HTML"):
 
-    # -------------------------
+    # -----------------------------
     # Validation
-    # -------------------------
-    if instructor == "":
-        st.error("Please enter Course Instructor.")
+    # -----------------------------
+    if not instructor:
+        st.error("Please enter the Course Instructor.")
         st.stop()
 
-    if department == "":
-        st.error("Please enter Department.")
+    if not department:
+        st.error("Please enter the Department.")
         st.stop()
 
-    if programme == "":
-        st.error("Please enter Programme.")
+    if not programme:
+        st.error("Please enter the Programme.")
         st.stop()
 
-    if subject == "":
-        st.error("Please enter Subject.")
+    if not subject:
+        st.error("Please enter the Subject.")
         st.stop()
 
-    if topic == "":
-        st.error("Please enter Topic.")
+    if not topic:
+        st.error("Please enter the Topic.")
         st.stop()
 
     if study_file is None:
@@ -118,7 +119,7 @@ if st.button("🚀 Generate HTML"):
     try:
 
         # ==========================================
-        # Create Generation Job
+        # CREATE GENERATION JOB
         # ==========================================
         response = supabase.table("generation_jobs").insert({
 
@@ -134,18 +135,35 @@ if st.button("🚀 Generate HTML"):
         job_id = response.data[0]["id"]
 
         # ==========================================
-        # Upload Study Material
+        # UPLOAD STUDY MATERIAL
         # ==========================================
-        extension = study_file.name.split(".")[-1]
+        study_path = upload_file(
+            study_file,
+            "study_materials",
+            job_id
+        )
 
-        storage_path = f"study_materials/{job_id}.{extension}"
+        save_uploaded_file(
+            job_id=job_id,
+            file_name=study_file.name,
+            storage_path=study_path,
+            file_type="Study Material"
+        )
 
-        supabase.storage.from_("AMP").upload(
-            path=storage_path,
-            file=study_file.getvalue(),
-            file_options={
-                "content-type": study_file.type
-            }
+        # ==========================================
+        # UPLOAD SIGNATURE
+        # ==========================================
+        signature_path = upload_file(
+            esign,
+            "signatures",
+            job_id
+        )
+
+        save_uploaded_file(
+            job_id=job_id,
+            file_name=esign.name,
+            storage_path=signature_path,
+            file_type="Signature"
         )
 
         # ==========================================
@@ -153,6 +171,7 @@ if st.button("🚀 Generate HTML"):
         # ==========================================
         st.success("✅ Generation Job Created Successfully!")
         st.success("✅ Study Material Uploaded Successfully!")
+        st.success("✅ E-Signature Uploaded Successfully!")
 
         st.info(f"Job ID: {job_id}")
 
