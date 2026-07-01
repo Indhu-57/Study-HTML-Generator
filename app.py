@@ -1,19 +1,21 @@
 import streamlit as st
 from supabase import create_client
-from storage import upload_file, save_uploaded_file
 
-# ==================================================
+from storage import upload_file, save_uploaded_file
+from extract import extract_pdf_text
+
+# =====================================================
 # PAGE CONFIGURATION
-# ==================================================
+# =====================================================
 st.set_page_config(
     page_title="ILM Generator",
     page_icon="🎓",
     layout="wide"
 )
 
-# ==================================================
+# =====================================================
 # SUPABASE CONNECTION
-# ==================================================
+# =====================================================
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
@@ -22,9 +24,9 @@ supabase = create_client(
     SUPABASE_KEY
 )
 
-# ==================================================
+# =====================================================
 # TITLE
-# ==================================================
+# =====================================================
 st.title("🎓 ILM Generator")
 st.caption("AI-Powered Interactive Learning Material Generator")
 
@@ -35,9 +37,9 @@ using Artificial Intelligence.
 
 st.divider()
 
-# ==================================================
+# =====================================================
 # COURSE INFORMATION
-# ==================================================
+# =====================================================
 st.subheader("Course Information")
 
 instructor = st.text_input(
@@ -65,9 +67,9 @@ topic = st.text_input(
     placeholder="e.g., Travelling Salesman Problem"
 )
 
-# ==================================================
+# =====================================================
 # FILE UPLOADS
-# ==================================================
+# =====================================================
 study_file = st.file_uploader(
     "Upload PDF / DOCX / TXT",
     type=["pdf", "docx", "txt"]
@@ -80,9 +82,9 @@ esign = st.file_uploader(
 
 st.divider()
 
-# ==================================================
+# =====================================================
 # GENERATE BUTTON
-# ==================================================
+# =====================================================
 if st.button("🚀 Generate HTML"):
 
     # -----------------------------
@@ -118,9 +120,9 @@ if st.button("🚀 Generate HTML"):
 
     try:
 
-        # ==========================================
+        # =====================================================
         # CREATE GENERATION JOB
-        # ==========================================
+        # =====================================================
         response = supabase.table("generation_jobs").insert({
 
             "status": "Pending",
@@ -134,9 +136,9 @@ if st.button("🚀 Generate HTML"):
 
         job_id = response.data[0]["id"]
 
-        # ==========================================
+        # =====================================================
         # UPLOAD STUDY MATERIAL
-        # ==========================================
+        # =====================================================
         study_path = upload_file(
             study_file,
             "study_materials",
@@ -150,9 +152,9 @@ if st.button("🚀 Generate HTML"):
             file_type="Study Material"
         )
 
-        # ==========================================
+        # =====================================================
         # UPLOAD SIGNATURE
-        # ==========================================
+        # =====================================================
         signature_path = upload_file(
             esign,
             "signatures",
@@ -166,24 +168,28 @@ if st.button("🚀 Generate HTML"):
             file_type="Signature"
         )
 
-        # ==========================================
+        # =====================================================
+        # EXTRACT PDF TEXT
+        # =====================================================
+        if study_file.type == "application/pdf":
+
+            extracted_text = extract_pdf_text(
+                study_file.getvalue()
+            )
+
+            st.subheader("📄 Extracted Text Preview")
+
+            st.text_area(
+                "Preview (First 3000 Characters)",
+                extracted_text[:3000],
+                height=300
+            )
+
+        # =====================================================
         # SUCCESS
-        # ==========================================
+        # =====================================================
         st.success("✅ Generation Job Created Successfully!")
         st.success("✅ Study Material Uploaded Successfully!")
-
-        from extract import extract_pdf_text
-
-text = extract_pdf_text(study_file.getvalue())
-
-st.subheader("Extracted Text Preview")
-
-st.text_area(
-    "First 3000 Characters",
-    text[:3000],
-    height=300
-)
-
         st.success("✅ E-Signature Uploaded Successfully!")
 
         st.info(f"Job ID: {job_id}")
