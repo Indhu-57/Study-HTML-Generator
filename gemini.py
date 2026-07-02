@@ -45,4 +45,9 @@ STUDY MATERIAL
         contents=final_prompt
     )
 
+   import json
+
+try:
+    return json.loads(response.text)
+except Exception:
     return response.text
