@@ -51,6 +51,48 @@ def generate_html(data, output_file):
 
 </div>
 
+<!-- Introduction -->
+
+<div class="section">
+
+<h2>📖 Introduction</h2>
+
+<p>{data.get("introduction","")}</p>
+
+</div>
+
+<!-- Learning Outcomes -->
+
+<div class="section">
+
+<h2>🎯 Learning Outcomes</h2>
+
+<ul>
+
+{"".join(f"<li>{item}</li>" for item in data.get("learning_outcomes", []))}
+
+</ul>
+
+</div>
+
+<!-- Definitions -->
+
+<div class="section">
+
+<h2>📚 Definitions</h2>
+
+{
+"".join(
+f'''
+<div class="card">
+<h3>{d["term"]}</h3>
+<p>{d["meaning"]}</p>
+</div>
+'''
+for d in data.get("definitions", [])
+)
+}
+
 </div>
 
 <script>
