@@ -3,10 +3,13 @@ from supabase import create_client
 
 from storage import upload_file, save_uploaded_file
 from extract import extract_pdf_text
+from gemini import generate_learning_material
+from html_generator import generate_html
 
 # =====================================================
 # PAGE CONFIGURATION
 # =====================================================
+
 st.set_page_config(
     page_title="ILM Generator",
     page_icon="🎓",
@@ -16,6 +19,7 @@ st.set_page_config(
 # =====================================================
 # SUPABASE CONNECTION
 # =====================================================
+
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
@@ -27,8 +31,9 @@ supabase = create_client(
 # =====================================================
 # TITLE
 # =====================================================
+
 st.title("🎓 ILM Generator")
-st.caption("AI-Powered Interactive Learning Material Generator")
+st.caption("AI Powered Interactive Learning Material System")
 
 st.write("""
 Generate interactive learning materials from **PDF, DOCX and TXT**
@@ -40,38 +45,40 @@ st.divider()
 # =====================================================
 # COURSE INFORMATION
 # =====================================================
+
 st.subheader("Course Information")
 
 instructor = st.text_input(
     "Course Instructor",
-    placeholder="e.g., Indhumathi T"
+    placeholder="e.g. Mrs Indhumathi T"
 )
 
 department = st.text_input(
     "Department",
-    placeholder="e.g., Mathematics"
+    placeholder="e.g. Mathematics"
 )
 
 programme = st.text_input(
     "Programme",
-    placeholder="e.g., B.Sc. Mathematics"
+    placeholder="e.g. B.Sc. Mathematics"
 )
 
 subject = st.text_input(
     "Subject",
-    placeholder="e.g., Operations Research"
+    placeholder="e.g. Operations Research"
 )
 
 topic = st.text_input(
     "Topic",
-    placeholder="e.g., Travelling Salesman Problem"
+    placeholder="e.g. Travelling Salesman Problem"
 )
 
 # =====================================================
-# FILE UPLOADS
+# FILE UPLOAD
 # =====================================================
+
 study_file = st.file_uploader(
-    "Upload PDF / DOCX / TXT",
+    "Upload Study Material",
     type=["pdf", "docx", "txt"]
 )
 
@@ -85,60 +92,62 @@ st.divider()
 # =====================================================
 # GENERATE BUTTON
 # =====================================================
-if st.button("🚀 Generate HTML"):
 
-    # -----------------------------
-    # Validation
-    # -----------------------------
+if st.button("🚀 Generate Interactive Learning Material"):
+
     if not instructor:
-        st.error("Please enter the Course Instructor.")
+        st.error("Please enter Course Instructor.")
         st.stop()
 
     if not department:
-        st.error("Please enter the Department.")
+        st.error("Please enter Department.")
         st.stop()
 
     if not programme:
-        st.error("Please enter the Programme.")
+        st.error("Please enter Programme.")
         st.stop()
 
     if not subject:
-        st.error("Please enter the Subject.")
+        st.error("Please enter Subject.")
         st.stop()
 
     if not topic:
-        st.error("Please enter the Topic.")
+        st.error("Please enter Topic.")
         st.stop()
 
     if study_file is None:
-        st.error("Please upload the Study Material.")
+        st.error("Please upload Study Material.")
         st.stop()
 
     if esign is None:
-        st.error("Please upload the E-Signature.")
+        st.error("Please upload E-Signature.")
         st.stop()
 
     try:
 
-        # =====================================================
-        # CREATE GENERATION JOB
-        # =====================================================
-        response = supabase.table("generation_jobs").insert({
+        with st.spinner("Creating generation job..."):
 
-            "status": "Pending",
-            "instructor": instructor,
-            "department": department,
-            "programme": programme,
-            "subject": subject,
-            "topic": topic
+            response = supabase.table(
+                "generation_jobs"
+            ).insert({
 
-        }).execute()
+                "status": "Processing",
+                "instructor": instructor,
+                "department": department,
+                "programme": programme,
+                "subject": subject,
+                "topic": topic
 
-        job_id = response.data[0]["id"]
+            }).execute()
 
-        # =====================================================
-        # UPLOAD STUDY MATERIAL
-        # =====================================================
+            job_id = response.data[0]["id"]
+
+        st.success("Generation Job Created")
+
+        # ===========================================
+        # Upload Study Material
+        # ===========================================
+
         study_path = upload_file(
             study_file,
             "study_materials",
@@ -152,9 +161,10 @@ if st.button("🚀 Generate HTML"):
             file_type="Study Material"
         )
 
-        # =====================================================
-        # UPLOAD SIGNATURE
-        # =====================================================
+        # ===========================================
+        # Upload Signature
+        # ===========================================
+
         signature_path = upload_file(
             esign,
             "signatures",
@@ -168,68 +178,132 @@ if st.button("🚀 Generate HTML"):
             file_type="Signature"
         )
 
-        # =====================================================
-        # EXTRACT PDF TEXT
-        # =====================================================
+        st.success("Files Uploaded Successfully")
+
+        # ===========================================
+        # Extract Text
+        # ===========================================
+
         if study_file.type == "application/pdf":
 
             extracted_text = extract_pdf_text(
                 study_file.getvalue()
             )
 
-            st.subheader("📄 Extracted Text Preview")
+        else:
+
+            st.error("Currently only PDF files are supported.")
+
+            st.stop()
+
+        st.success("Text Extracted Successfully")
+
+        with st.expander("Preview Extracted Text"):
 
             st.text_area(
-                "Preview (First 3000 Characters)",
+                "",
                 extracted_text[:3000],
                 height=300
             )
+                    # ===========================================
+        # Generate Learning Material using Gemini
+        # ===========================================
 
-        # =====================================================
-        # SUCCESS
-        # =====================================================
-        st.success("✅ Generation Job Created Successfully!")
-        st.success("✅ Study Material Uploaded Successfully!")
-        st.success("✅ E-Signature Uploaded Successfully!")
+        with st.spinner("Generating Learning Material using Gemini..."):
 
-        st.info(f"Job ID: {job_id}")
+            result = generate_learning_material(
+                extracted_text
+            )
+
+        st.success("Gemini Response Generated Successfully")
+
+        # ===========================================
+        # Fill Metadata
+        # ===========================================
+
+        if "metadata" not in result:
+            result["metadata"] = {}
+
+        result["metadata"]["topic"] = topic
+        result["metadata"]["department"] = department
+        result["metadata"]["programme"] = programme
+        result["metadata"]["course_instructor"] = instructor
+        result["metadata"]["subject"] = subject
+        result["metadata"]["generated_on"] = ""
+
+        # Optional: Store signature path
+        result["metadata"]["esign_url"] = signature_path
+
+        # ===========================================
+        # Preview JSON
+        # ===========================================
+
+        st.subheader("Generated JSON")
+
+        st.json(result)
+
+        # ===========================================
+        # Generate HTML
+        # ===========================================
+
+        with st.spinner("Generating Interactive HTML..."):
+
+            html = generate_html(result)
+
+        st.success("Interactive HTML Generated Successfully")
+
+        # ===========================================
+        # Download Button
+        # ===========================================
+
+        st.download_button(
+            label="📥 Download Interactive Learning Material",
+            data=html,
+            file_name=f"{topic.replace(' ','_')}.html",
+            mime="text/html"
+        )
+
+        # ===========================================
+        # Update Job Status
+        # ===========================================
+
+        supabase.table(
+            "generation_jobs"
+        ).update({
+
+            "status": "Completed"
+
+        }).eq(
+
+            "id",
+            job_id
+
+        ).execute()
+
+        st.success("🎉 ILM Generation Completed Successfully!")
 
     except Exception as e:
 
+        if 'job_id' in locals():
+
+            try:
+
+                supabase.table(
+                    "generation_jobs"
+                ).update({
+
+                    "status": "Failed"
+
+                }).eq(
+
+                    "id",
+                    job_id
+
+                ).execute()
+
+            except:
+                pass
+
         st.error("Something went wrong.")
+
         st.exception(e)
-
-
-# =====================================================
-# DEVELOPER TEST - GEMINI
-# =====================================================
-
-st.divider()
-
-st.subheader("🛠 Developer Test - Gemini")
-
-from gemini import generate_learning_material
-
-sample_text = st.text_area(
-    "Paste some text here",
-    height=200
-)
-
-if st.button("Test Gemini"):
-
-    if sample_text.strip() == "":
-        st.warning("Please enter some text.")
-
-    else:
-
-        with st.spinner("Gemini is thinking..."):
-
-            result = generate_learning_material(sample_text)
-
-        st.success("Response received!")
-
-        st.text_area(
-            "Gemini Response",
-            result,
-            height=400
-        )
