@@ -178,3 +178,32 @@ The JSON must exactly match the provided schema.
 Do not generate any text outside JSON.
 
 The study material will be provided after this instruction.
+
+==================================================
+OUTPUT FORMAT
+==================================================
+
+Return ONLY valid JSON.
+
+The JSON must have the following structure.
+
+{
+  "title": "",
+  "introduction": "",
+  "learning_outcomes": [],
+  "definitions": [],
+  "formulae": [],
+  "algorithms": [],
+  "worked_examples": [],
+  "important_notes": [],
+  "summary": "",
+  "flashcards": [],
+  "mcqs": [],
+  "did_you_know": ""
+}
+
+Do not return markdown.
+
+Do not return explanations.
+
+Do not return any text outside JSON.
