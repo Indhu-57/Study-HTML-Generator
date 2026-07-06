@@ -1,22 +1,6 @@
-import base64
 import json
 from datetime import datetime
 from pathlib import Path
-
-
-def _load_logo_base64():
-    """
-    Looks for a college logo at assets/logo.png (or .jpg/.jpeg).
-    Returns a base64 data-URI string, or None if no logo file exists yet.
-    """
-    for filename in ("logo.png", "logo.jpg", "logo.jpeg"):
-        path = Path("assets") / filename
-        if path.exists():
-            ext = path.suffix.lstrip(".").lower()
-            mime = "jpeg" if ext in ("jpg", "jpeg") else "png"
-            encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
-            return f"data:image/{mime};base64,{encoded}"
-    return None
 
 
 def _initials(text, max_len=3):
@@ -40,7 +24,6 @@ def generate_html(data):
     subject = metadata.get("subject", "")
     generated_on = metadata.get("generated_on") or datetime.now().strftime("%d %B %Y")
 
-    logo_data_uri = _load_logo_base64()
     badge_text = _initials(subject)
 
     # -----------------------------------------------------
@@ -192,8 +175,6 @@ def generate_html(data):
     # FOOTER
     # -----------------------------------------------------
     footer_html = "<footer>"
-    if logo_data_uri:
-        footer_html += f'<div class="logo-block"><img src="{logo_data_uri}" alt="College Logo" class="college-logo"></div>'
     footer_html += '''
 <p class="designed-by-label">Designed by</p>
 <h3>Mrs Indhumathi T</h3>
@@ -227,7 +208,6 @@ def generate_html(data):
     <div class="nav-logo-text">
       <span class="nav-logo-main">{subject}</span>
     </div>
-    {f'<img class="nav-college-logo" src="{logo_data_uri}" alt="College Logo">' if logo_data_uri else ''}
   </div>
   <div class="nav-links">
     <a class="active" onclick="showPage('study', this)">📖 Study</a>
