@@ -95,9 +95,9 @@ def generate_html(data):
     for formula in data.get("formulae", []):
         html += f"""
 <div class="card formula-card">
-<h3>{formula.get("name","")}</h3>
-<p class="formula">{formula.get("expression","")}</p>
-<p>{formula.get("description","")}</p>
+<h3>{formula.get("formula_name","")}</h3>
+<p class="formula">{formula.get("formula","")}</p>
+<p>{formula.get("explanation","")}</p>
 </div>
 """
 
@@ -118,7 +118,7 @@ def generate_html(data):
             html += f"<li>{step}</li>"
         html += f"""
 </ol>
-<p><strong>Answer:</strong> {example.get("answer","")}</p>
+<p><strong>Answer:</strong> {example.get("solution","")}</p>
 </div>
 """
 
