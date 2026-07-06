@@ -82,11 +82,6 @@ study_file = st.file_uploader(
     type=["pdf", "docx", "txt"]
 )
 
-esign = st.file_uploader(
-    "Upload E-Signature",
-    type=["png", "jpg", "jpeg"]
-)
-
 st.divider()
 
 # =====================================================
@@ -117,10 +112,6 @@ if st.button("🚀 Generate Interactive Learning Material"):
 
     if study_file is None:
         st.error("Please upload Study Material.")
-        st.stop()
-
-    if esign is None:
-        st.error("Please upload E-Signature.")
         st.stop()
 
     try:
@@ -161,23 +152,6 @@ if st.button("🚀 Generate Interactive Learning Material"):
             file_type="Study Material"
         )
 
-        # ===========================================
-        # Upload Signature
-        # ===========================================
-
-        signature_path = upload_file(
-            esign,
-            "signatures",
-            job_id
-        )
-
-        save_uploaded_file(
-            job_id=job_id,
-            file_name=esign.name,
-            storage_path=signature_path,
-            file_type="Signature"
-        )
-
         st.success("Files Uploaded Successfully")
 
         # ===========================================
@@ -205,7 +179,8 @@ if st.button("🚀 Generate Interactive Learning Material"):
                 extracted_text[:3000],
                 height=300
             )
-                    # ===========================================
+
+        # ===========================================
         # Generate Learning Material using Gemini
         # ===========================================
 
@@ -230,9 +205,6 @@ if st.button("🚀 Generate Interactive Learning Material"):
         result["metadata"]["course_instructor"] = instructor
         result["metadata"]["subject"] = subject
         result["metadata"]["generated_on"] = ""
-
-        # Optional: Store signature path
-        result["metadata"]["esign_url"] = signature_path
 
         # ===========================================
         # Preview JSON
