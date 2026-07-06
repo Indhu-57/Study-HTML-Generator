@@ -1,45 +1,33 @@
-
 /* ==========================================
    ILM Generator - AI Powered Interactive Learning Material System
    ========================================== */
-
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
 }
-
 body{
     font-family:Arial, Helvetica, sans-serif;
     background:#f5f7fb;
     color:#222;
     line-height:1.7;
 }
-
 .container{
     max-width:1200px;
     margin:auto;
     padding:30px;
 }
-
 header{
     background:#0d47a1;
     color:white;
     padding:30px;
     border-radius:12px;
     margin-bottom:25px;
+    text-align:center;
 }
-
 header h1{
     font-size:34px;
 }
-
-header h2{
-    font-size:22px;
-    margin-top:10px;
-    font-weight:normal;
-}
-
 .info-card{
     background:white;
     padding:20px;
@@ -47,7 +35,6 @@ header h2{
     margin-bottom:20px;
     box-shadow:0 2px 10px rgba(0,0,0,0.08);
 }
-
 .section{
     background:white;
     margin-top:25px;
@@ -55,16 +42,13 @@ header h2{
     border-radius:12px;
     box-shadow:0 2px 10px rgba(0,0,0,0.08);
 }
-
 .section h2{
     color:#0d47a1;
     margin-bottom:15px;
 }
-
-ul{
+ul, ol{
     padding-left:25px;
 }
-
 .card{
     background:#eef5ff;
     padding:15px;
@@ -72,7 +56,20 @@ ul{
     margin-bottom:15px;
     border-radius:8px;
 }
-
+.formula-card .formula{
+    font-family:"Cambria Math", Georgia, serif;
+    font-size:18px;
+    background:#ffffff;
+    padding:10px 14px;
+    border-radius:6px;
+    display:inline-block;
+    margin:8px 0;
+    border:1px dashed #0d47a1;
+}
+.example-card ol{
+    margin-top:10px;
+    margin-bottom:10px;
+}
 .flashcard{
     background:#fff8e1;
     border-left:5px solid #ff9800;
@@ -80,7 +77,6 @@ ul{
     margin-bottom:15px;
     border-radius:8px;
 }
-
 .mcq{
     background:#f9f9f9;
     padding:20px;
@@ -88,7 +84,6 @@ ul{
     border-radius:10px;
     border:1px solid #ddd;
 }
-
 button{
     background:#0d47a1;
     color:white;
@@ -98,40 +93,42 @@ button{
     cursor:pointer;
     font-size:15px;
 }
-
 button:hover{
     background:#1565c0;
 }
-
 footer{
     margin-top:50px;
     background:#0d47a1;
     color:white;
     text-align:center;
-    padding:30px;
+    padding:40px 30px;
     border-radius:12px;
 }
-
-footer h2{
-    margin-bottom:10px;
-}
-
 footer h3{
-    margin:15px 0;
+    margin:10px 0 4px;
 }
-
+.logo-block{
+    margin-bottom:20px;
+}
+.college-logo{
+    max-width:110px;
+    max-height:110px;
+    background:white;
+    border-radius:50%;
+    padding:8px;
+}
+.designed-by-label{
+    font-size:14px;
+    opacity:0.85;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    margin-top:10px;
+}
 @media(max-width:768px){
-
 .container{
     padding:15px;
 }
-
 header h1{
     font-size:26px;
 }
-
-header h2{
-    font-size:18px;
-}
-
 }
