@@ -11,6 +11,20 @@ function toggleSection(headerEl) {
     body.classList.toggle('open');
 }
 
+function expandAllSections() {
+    document.querySelectorAll('#page-study .section-header').forEach(function (h) {
+        h.classList.add('open');
+        h.nextElementSibling.classList.add('open');
+    });
+}
+
+function collapseAllSections() {
+    document.querySelectorAll('#page-study .section-header').forEach(function (h) {
+        h.classList.remove('open');
+        h.nextElementSibling.classList.remove('open');
+    });
+}
+
 // ----------------------------
 // Page navigation (Study / Formulas / MCQ Test)
 // ----------------------------
@@ -56,13 +70,12 @@ function renderQuestion() {
     var total = QUIZ_DATA.length;
 
     document.getElementById('qh-current').textContent = (currentIndex + 1);
-    document.getElementById('qh-total').textContent = total;
     var pct = Math.round(((currentIndex) / total) * 100);
     document.getElementById('progress-fill').style.width = pct + '%';
 
     var html = '';
     html += '<div class="question-card">';
-    html += '<div class="q-number">Question ' + (currentIndex + 1) + ' of ' + total + '</div>';
+    html += '<div class="q-number">Question ' + (currentIndex + 1) + '</div>';
     html += '<div class="q-text">' + q.question + '</div>';
     html += '<div class="options" id="options-area">';
     q.options.forEach(function (opt, i) {
@@ -145,7 +158,7 @@ function showResults() {
         rv += '<td class="' + (a.isCorrect ? 'rv-correct' : 'rv-wrong') + '">' + (a.isCorrect ? '✓' : '✗') + '</td></tr>';
     });
     rv += '</table>';
-    document.getElementById('review-area').innerHTML = rv; 
+    document.getElementById('review-area').innerHTML = rv;
 }
 
 function retakeQuiz() {
