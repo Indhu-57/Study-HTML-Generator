@@ -43,7 +43,7 @@ function showPage(pageId, linkEl) {
 // ----------------------------
 // Flashcards
 // ----------------------------
-function toggleFlashcard(id) {
+function toggleReveal(id) {
     var answer = document.getElementById(id);
     answer.style.display = (answer.style.display === 'none') ? 'block' : 'none';
 }
