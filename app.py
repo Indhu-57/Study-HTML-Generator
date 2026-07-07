@@ -207,14 +207,6 @@ if st.button("🚀 Generate Interactive Learning Material"):
         result["metadata"]["generated_on"] = ""
 
         # ===========================================
-        # Preview JSON
-        # ===========================================
-
-        st.subheader("Generated JSON")
-
-        st.json(result)
-
-        # ===========================================
         # Generate HTML
         # ===========================================
 
