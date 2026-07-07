@@ -145,7 +145,7 @@ function showResults() {
         rv += '<td class="' + (a.isCorrect ? 'rv-correct' : 'rv-wrong') + '">' + (a.isCorrect ? '✓' : '✗') + '</td></tr>';
     });
     rv += '</table>';
-    document.getElementById('review-area').innerHTML = rv;
+    document.getElementById('review-area').innerHTML = rv; 
 }
 
 function retakeQuiz() {
