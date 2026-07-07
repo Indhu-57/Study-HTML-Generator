@@ -45,7 +45,7 @@ Generate:
 • Worked Examples
 • Important Notes
 • Summary
-• Flashcards
+• Practice Problems
 • Multiple Choice Questions
 
 ==================================================
@@ -94,8 +94,17 @@ applied at least once. Each worked example must contain:
 
 • title — short name of what is being demonstrated
 • problem — the question/problem statement
-• steps — a list of individual solution steps, in order
+• steps — a list of individual solution steps, in order. Each step string
+  must NOT start with its own number or the word "Step" (e.g. do not write
+  "1. Recall the rule..." or "Step 1: Recall the rule..." — just write
+  "Recall the rule..."), since steps are numbered automatically when
+  displayed.
 • solution — the final answer only (a short string, not the steps list)
+
+Write all mathematical expressions using plain caret notation for
+exponents, e.g. (a + b)^2, x^3589, a^n — do not use Unicode superscript
+characters or LaTeX; the display layer converts ^ into proper
+superscripts automatically.
 
 ==================================================
 IMPORTANT NOTES
@@ -111,11 +120,15 @@ Generate a concise revision summary as a list of bullet points (an array
 of strings), not a single paragraph.
 
 ==================================================
-FLASHCARDS
+PRACTICE PROBLEMS
 ==================================================
 
-Generate question-answer flashcards covering topics from across the
-entire material, not just one topic.
+Generate 5 to 10 short practice problems (without full step-by-step
+solutions) covering topics from across the entire material, so a student
+can self-test. Each entry must contain:
+
+• problem — the question/problem statement
+• answer — the final answer only (short), no worked steps
 
 ==================================================
 MCQs
@@ -152,8 +165,8 @@ Return ONLY valid JSON, matching this structure exactly:
   ],
   "important_notes": [],
   "summary": [],
-  "flashcards": [
-    {"question": "", "answer": ""}
+  "practice_problems": [
+    {"problem": "", "answer": ""}
   ],
   "mcqs": [
     {"question": "", "option_a": "", "option_b": "", "option_c": "", "option_d": "", "correct_answer": "", "explanation": ""}
