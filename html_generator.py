@@ -94,12 +94,12 @@ def generate_html(data):
 
     intro_body = ""
     if data.get("introduction"):
-        intro_body += f'<p style="margin-bottom:16px;">{data.get("introduction","")}</p>'
+        intro_body += f'<p style="margin-bottom:16px;">{_format_math(data.get("introduction",""))}</p>'
     if data.get("learning_outcomes"):
         intro_body += '<p style="font-weight:700;color:var(--navy);margin-bottom:8px;">🎯 Learning Outcomes</p>'
         intro_body += '<ul class="key-points">'
         for item in data.get("learning_outcomes", []):
-            intro_body += f"<li>{item}</li>"
+            intro_body += f"<li>{_format_math(item)}</li>"
         intro_body += "</ul>"
     if intro_body:
         study_sections.append(("📖", "Introduction & Learning Outcomes", intro_body, True))
@@ -121,20 +121,6 @@ def generate_html(data):
             body += f"<li>{_format_math(summary_val)}</li>"
         body += "</ul>"
         study_sections.append(("📄", "Summary", body, False))
-
-    if data.get("practice_problems"):
-        body = ""
-        for i, pp in enumerate(data.get("practice_problems", []), start=1):
-            problem = _format_math(pp.get("problem", ""))
-            answer = _format_math(pp.get("answer", ""))
-            body += f'''
-<div class="practice-card">
-<strong>Problem {i}:</strong> {problem}
-<button onclick="toggleReveal('practice{i}')">Show Answer</button>
-<div id="practice{i}" style="display:none; margin-top:10px;">{answer}</div>
-</div>
-'''
-        study_sections.append(("🧠", "Practice Problems", body, False))
 
     study_icons_bg = ["#dbeafe", "#dcfce7", "#fef3c7", "#fee2e2", "#ede9fe", "#fce7f3"]
     study_html = ""
@@ -187,7 +173,7 @@ def generate_html(data):
                 cleaned = _clean_step(step)
                 if cleaned:
                     steps_html += f'<div class="step-row"><div class="step-num"></div><div class="step-text">{cleaned}</div></div>'
-            heading = title if title else "Worked Example"
+            heading = _format_math(title) if title else "Worked Example"
             if problem:
                 heading += f" — {_format_math(problem)}"
             final_html = f'<div class="step-answer">Answer: {_format_math(final_answer)}</div>' if final_answer else ""
@@ -201,6 +187,22 @@ def generate_html(data):
     else:
         examples_page_html = '<p style="text-align:center;color:var(--muted);">No worked examples for this topic.</p>'
 
+    if data.get("practice_problems"):
+        examples_page_html += '<div class="study-section"><div class="section-header open" onclick="toggleSection(this)">'
+        examples_page_html += '<div class="section-icon" style="background:#dbeafe;">🧠</div><h2>Practice Problems</h2><span class="toggle">▼</span></div>'
+        examples_page_html += '<div class="section-body open">'
+        for i, pp in enumerate(data.get("practice_problems", []), start=1):
+            problem = _format_math(pp.get("problem", ""))
+            answer = _format_math(pp.get("answer", ""))
+            examples_page_html += f'''
+<div class="practice-card">
+<strong>Problem {i}:</strong> {problem}
+<button onclick="toggleReveal('practice{i}')">Show Answer</button>
+<div id="practice{i}" style="display:none; margin-top:10px;">{answer}</div>
+</div>
+'''
+        examples_page_html += "</div></div>"
+
     # -----------------------------------------------------
     # FORMULAS PAGE — dedicated tab, formula grid only
     # -----------------------------------------------------
@@ -212,7 +214,7 @@ def generate_html(data):
         for f in data.get("formulae", []):
             formulas_page_html += f'''
 <div class="formula-card">
-<div class="f-label">{f.get("formula_name","")}</div>
+<div class="f-label">{_format_math(f.get("formula_name",""))}</div>
 <div class="f-eq">{_format_math(f.get("formula",""))}</div>
 <div class="f-desc">{_format_math(f.get("explanation",""))}</div>
 </div>
@@ -242,19 +244,6 @@ def generate_html(data):
         })
     quiz_json = json.dumps(quiz_data)
     quiz_count = len(quiz_data)
-
-    # -----------------------------------------------------
-    # STATS BAR (generic, works for any topic)
-    # -----------------------------------------------------
-    stats = [
-        ("📚", len(data.get("definitions", [])), "Definitions"),
-        ("➗", len(data.get("formulae", [])), "Formulae"),
-    ]
-    stats_html = '<div class="stats-bar">'
-    for icon, count, label in stats:
-        if count:
-            stats_html += f'<div class="stat-chip"><span class="stat-icon">{icon}</span><span class="stat-num">{count}</span><span class="stat-lbl">{label}</span></div>'
-    stats_html += "</div>"
 
     # -----------------------------------------------------
     # FOOTER
@@ -315,8 +304,6 @@ def generate_html(data):
     </div>
   </div>
 </div>
-
-{stats_html}
 
 <div id="page-study" class="page active">
 <div class="container">
