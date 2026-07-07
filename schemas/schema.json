@@ -1,31 +1,45 @@
 {
-  "metadata": {
-    "topic": "",
-    "department": "",
-    "programme": "",
-    "course_instructor": "",
-    "subject": "",
-    "esign_url": "",
-    "generated_on": ""
-  },
-
   "introduction": "",
-
   "learning_outcomes": [],
-
-  "definitions": [],
-
-  "formulae": [],
-
-  "worked_examples": [],
-
+  "definitions": [
+    {
+      "term": "",
+      "meaning": "",
+      "examples": []
+    }
+  ],
+  "formulae": [
+    {
+      "formula_name": "",
+      "formula": "",
+      "explanation": ""
+    }
+  ],
+  "worked_examples": [
+    {
+      "title": "",
+      "problem": "",
+      "steps": [],
+      "solution": ""
+    }
+  ],
   "important_notes": [],
-
   "summary": [],
-
-  "mcqs": [],
-
-  "flashcards": [],
-
-  "mind_map": ""
+  "flashcards": [
+    {
+      "question": "",
+      "answer": ""
+    }
+  ],
+  "mcqs": [
+    {
+      "question": "",
+      "option_a": "",
+      "option_b": "",
+      "option_c": "",
+      "option_d": "",
+      "correct_answer": "",
+      "explanation": ""
+    }
+  ]
 }
