@@ -1,6 +1,41 @@
 import json
+import re
 from datetime import datetime
 from pathlib import Path
+
+
+_EXPONENT_RE = re.compile(r'\^(\([^)]*\)|-?[A-Za-z0-9]+)')
+_LEADING_STEP_NUM_RE = re.compile(r'^\s*(?:step\s*)?\d+\s*[\.\):]\s*', re.IGNORECASE)
+
+
+def _format_math(text):
+    """
+    Turns caret-style exponents like (a + b)^2 or x^3589 into proper
+    HTML superscripts: (a + b)<sup>2</sup>, x<sup>3589</sup>.
+    Leaves everything else untouched.
+    """
+    if not isinstance(text, str) or "^" not in text:
+        return text
+
+    def repl(m):
+        exp = m.group(1)
+        if exp.startswith("(") and exp.endswith(")"):
+            exp = exp[1:-1]
+        return f"<sup>{exp}</sup>"
+
+    return _EXPONENT_RE.sub(repl, text)
+
+
+def _clean_step(text):
+    """
+    Strips a redundant leading '1.' / 'Step 1:' style prefix from a step
+    string (since steps are already rendered with their own numbering),
+    then applies math formatting.
+    """
+    if not isinstance(text, str):
+        return text
+    text = _LEADING_STEP_NUM_RE.sub("", text).strip()
+    return _format_math(text)
 
 
 def _normalize_worked_example(ex):
@@ -70,9 +105,10 @@ def generate_html(data):
         study_sections.append(("📖", "Introduction & Learning Outcomes", intro_body, True))
 
     if data.get("important_notes"):
-        body = '<div class="note-box"><strong>📝 Key Points:</strong><br>'
-        body += " &nbsp;|&nbsp; ".join(data.get("important_notes", []))
-        body += "</div>"
+        body = '<ul class="key-points">'
+        for note in data.get("important_notes", []):
+            body += f"<li>{_format_math(note)}</li>"
+        body += "</ul>"
         study_sections.append(("💡", "Important Notes", body, True))
 
     if data.get("summary"):
@@ -80,23 +116,25 @@ def generate_html(data):
         body = '<ul class="summary-list">'
         if isinstance(summary_val, list):
             for point in summary_val:
-                body += f"<li>{point}</li>"
+                body += f"<li>{_format_math(point)}</li>"
         else:
-            body += f"<li>{summary_val}</li>"
+            body += f"<li>{_format_math(summary_val)}</li>"
         body += "</ul>"
         study_sections.append(("📄", "Summary", body, False))
 
-    if data.get("flashcards"):
+    if data.get("practice_problems"):
         body = ""
-        for i, card in enumerate(data.get("flashcards", []), start=1):
+        for i, pp in enumerate(data.get("practice_problems", []), start=1):
+            problem = _format_math(pp.get("problem", ""))
+            answer = _format_math(pp.get("answer", ""))
             body += f'''
-<div class="flashcard">
-<strong>Q:</strong> {card.get("question","")}
-<button onclick="toggleFlashcard('flash{i}')">Show Answer</button>
-<div id="flash{i}" style="display:none; margin-top:10px;">{card.get("answer","")}</div>
+<div class="practice-card">
+<strong>Problem {i}:</strong> {problem}
+<button onclick="toggleReveal('practice{i}')">Show Answer</button>
+<div id="practice{i}" style="display:none; margin-top:10px;">{answer}</div>
 </div>
 '''
-        study_sections.append(("🗂", "Flashcards", body, False))
+        study_sections.append(("🧠", "Practice Problems", body, False))
 
     study_icons_bg = ["#dbeafe", "#dcfce7", "#fef3c7", "#fee2e2", "#ede9fe", "#fce7f3"]
     study_html = ""
@@ -125,12 +163,12 @@ def generate_html(data):
             if examples:
                 examples_html = '<div class="def-examples"><strong>Examples:</strong><ul class="key-points">'
                 for ex in examples:
-                    examples_html += f"<li>{ex}</li>"
+                    examples_html += f"<li>{_format_math(ex)}</li>"
                 examples_html += "</ul></div>"
             definitions_html += f'''
 <div class="def-box">
 <div class="def-title">{d.get("term","")}</div>
-<p>{d.get("meaning","")}</p>
+<p>{_format_math(d.get("meaning",""))}</p>
 {examples_html}
 </div>
 '''
@@ -144,14 +182,20 @@ def generate_html(data):
     if data.get("worked_examples"):
         for i, ex in enumerate(data.get("worked_examples", []), start=1):
             title, problem, steps, final_answer = _normalize_worked_example(ex)
-            steps_html = "".join(f"<li>{s}</li>" for s in steps)
+            steps_html = ""
+            for step in steps:
+                cleaned = _clean_step(step)
+                if cleaned:
+                    steps_html += f'<div class="step-row"><div class="step-num"></div><div class="step-text">{cleaned}</div></div>'
             heading = title if title else "Worked Example"
             if problem:
-                heading += f" — {problem}"
+                heading += f" — {_format_math(problem)}"
+            final_html = f'<div class="step-answer">Answer: {_format_math(final_answer)}</div>' if final_answer else ""
             examples_page_html += f'''
 <div class="worked-example">
 <div class="we-q">{heading}</div>
-<div class="we-a"><ol>{steps_html}</ol>{f'<code>{final_answer}</code>' if final_answer else ''}</div>
+<div class="step-list">{steps_html}</div>
+{final_html}
 </div>
 '''
     else:
@@ -169,8 +213,8 @@ def generate_html(data):
             formulas_page_html += f'''
 <div class="formula-card">
 <div class="f-label">{f.get("formula_name","")}</div>
-<div class="f-eq">{f.get("formula","")}</div>
-<div class="f-desc">{f.get("explanation","")}</div>
+<div class="f-eq">{_format_math(f.get("formula",""))}</div>
+<div class="f-desc">{_format_math(f.get("explanation",""))}</div>
 </div>
 '''
         formulas_page_html += "</div></div></div>"
@@ -183,18 +227,18 @@ def generate_html(data):
     quiz_data = []
     for mcq in data.get("mcqs", []):
         options = [
-            mcq.get("option_a", ""),
-            mcq.get("option_b", ""),
-            mcq.get("option_c", ""),
-            mcq.get("option_d", ""),
+            _format_math(mcq.get("option_a", "")),
+            _format_math(mcq.get("option_b", "")),
+            _format_math(mcq.get("option_c", "")),
+            _format_math(mcq.get("option_d", "")),
         ]
         correct_letter = (mcq.get("correct_answer", "") or "A").strip().upper()
         correct_index = {"A": 0, "B": 1, "C": 2, "D": 3}.get(correct_letter, 0)
         quiz_data.append({
-            "question": mcq.get("question", ""),
+            "question": _format_math(mcq.get("question", "")),
             "options": options,
             "correctIndex": correct_index,
-            "explanation": mcq.get("explanation", ""),
+            "explanation": _format_math(mcq.get("explanation", "")),
         })
     quiz_json = json.dumps(quiz_data)
     quiz_count = len(quiz_data)
@@ -205,7 +249,6 @@ def generate_html(data):
     stats = [
         ("📚", len(data.get("definitions", [])), "Definitions"),
         ("➗", len(data.get("formulae", [])), "Formulae"),
-        ("🗂", len(data.get("flashcards", [])), "Flashcards"),
     ]
     stats_html = '<div class="stats-bar">'
     for icon, count, label in stats:
