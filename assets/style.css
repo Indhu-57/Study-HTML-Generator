@@ -81,10 +81,18 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 
 /* WORKED EXAMPLE */
 .worked-example{background:#f0fdf8;border:1px solid #bbf7d0;border-radius:12px;padding:16px 18px;margin:12px 0;}
-.worked-example .we-q{font-weight:700;color:var(--navy);margin-bottom:8px;font-size:.93rem;}
-.worked-example .we-a{color:#065f46;font-size:.88rem;line-height:1.8;}
-.worked-example .we-a code{background:rgba(16,185,129,.12);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.83rem;font-weight:600;}
-.worked-example ol{margin:8px 0 8px 20px;}
+.worked-example .we-q{font-weight:700;color:var(--navy);margin-bottom:12px;font-size:.95rem;}
+.step-list{display:flex;flex-direction:column;gap:8px;counter-reset:stepcounter;}
+.step-row{display:flex;align-items:flex-start;gap:10px;counter-increment:stepcounter;}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--accent2);flex-shrink:0;margin-top:2px;}
+.step-num::before{content:counter(stepcounter);display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:white;font-size:.72rem;font-weight:700;}
+.step-text{color:#065f46;font-size:.89rem;line-height:1.6;padding-top:1px;}
+.step-answer{margin-top:14px;padding:10px 14px;background:#065f46;color:white;border-radius:8px;font-size:.87rem;font-weight:600;}
+.worked-example sup{font-size:.7em;}
+
+/* PRACTICE PROBLEMS */
+.practice-card{background:#eff6ff;border:1px solid #bfdbfe;border-left:5px solid var(--sky);padding:15px 18px;margin-bottom:14px;border-radius:0 10px 10px 0;}
+.practice-card button{margin-top:8px;}
 
 /* NOTE BOX */
 .note-box{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:13px 16px;margin:12px 0;font-size:.86rem;color:#78350f;}
