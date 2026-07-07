@@ -1,171 +1,349 @@
-/* ==========================================
-   ILM Generator - matches reference template style
-   ========================================== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap');
+import json
+from datetime import datetime
+from pathlib import Path
 
-:root{
-  --navy:#0f2447;--blue:#1a4080;--sky:#2563eb;--accent:#f59e0b;
-  --accent2:#10b981;--red:#ef4444;--white:#fff;
-  --gray:#64748b;--border:#dde3f0;--card:#fff;--text:#1e293b;--muted:#475569;
-  --pale-green:#bfe6c8;--pale-green-dark:#9ed4ac;--pale-blue:#bcd9f2;--pale-blue-dark:#9cc3ea;
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Inter',sans-serif;background:#eef2fb;color:var(--text);line-height:1.7;}
 
-/* NAV */
-nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark) 100%);padding:8px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.15);flex-wrap:nowrap;}
-.nav-logo{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.nav-logo-badge{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9px;flex-shrink:0;position:relative;background:var(--navy);border:1.5px solid var(--accent);box-shadow:inset 0 0 0 1px rgba(245,158,11,.3),0 0 8px rgba(245,158,11,.18);}
-.nav-logo-badge span{font-family:'Merriweather',serif;font-weight:800;font-size:.8rem;letter-spacing:.3px;color:var(--accent);}
-.nav-logo-text{display:flex;flex-direction:column;line-height:1.1;}
-.nav-logo-main{color:var(--navy);font-weight:800;font-size:.92rem;font-family:'Merriweather',serif;letter-spacing:.2px;white-space:nowrap;}
-.nav-college-logo{height:30px;object-fit:contain;flex-shrink:0;margin-left:4px;padding-left:10px;border-left:1px solid rgba(15,36,71,.25);}
-.nav-links{display:flex;gap:3px;flex-wrap:nowrap;margin-left:auto;overflow-x:auto;}
-.nav-links a{color:var(--navy);text-decoration:none;font-size:.72rem;font-weight:600;padding:5px 10px;border-radius:18px;transition:all .2s;white-space:nowrap;cursor:pointer;}
-.nav-links a:hover,.nav-links a.active{background:var(--navy);color:#fff;}
+def _normalize_worked_example(ex):
+    """
+    Different Gemini runs have returned worked examples shaped differently:
+    - {title, problem, steps: [...], solution: "final answer"}
+    - {problem, solution: [...steps...]}  (steps nested inside 'solution')
+    This normalizes any of those into (title, problem, steps, final_answer).
+    """
+    title = ex.get("title") or ex.get("example_title") or ""
+    problem = ex.get("problem") or ex.get("question") or ""
 
-/* HERO */
-.hero{background:linear-gradient(135deg,var(--pale-blue) 0%,#a8c9ec 55%,var(--pale-blue-dark) 100%);color:#16335c;min-height:76px;position:relative;overflow:hidden;display:flex;align-items:center;padding:10px 0;}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 25% 50%,rgba(255,255,255,.25) 0%,transparent 65%),radial-gradient(ellipse at 75% 40%,rgba(245,158,11,.12) 0%,transparent 60%);}
-.hero-content{position:relative;z-index:1;max-width:1100px;width:100%;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;}
-.hero-title{font-family:'Merriweather',serif;font-size:1.25rem;font-weight:700;line-height:1.1;}
+    steps = ex.get("steps")
+    solution = ex.get("solution")
 
-/* INSTRUCTOR PILL */
-.instructor-pill{display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.4);border:1px solid rgba(22,51,92,.18);border-radius:50px;padding:6px 14px;flex-shrink:0;}
-.inst-details{display:flex;flex-direction:column;}
-.inst-label{font-size:.56rem;color:#8a5200;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:0;line-height:1.1;}
-.inst-name{font-size:.78rem;font-weight:700;color:#16335c;line-height:1.15;}
-.inst-role{font-size:.6rem;color:#3d5a82;line-height:1.2;}
+    if isinstance(steps, list) and steps:
+        final_answer = ex.get("answer") or (solution if isinstance(solution, str) else "")
+    elif isinstance(solution, list):
+        steps = solution
+        final_answer = ex.get("answer") or (steps[-1] if steps else "")
+    else:
+        steps = steps if isinstance(steps, list) else []
+        final_answer = solution if isinstance(solution, str) else (ex.get("answer") or "")
 
-/* STATS BAR */
-.stats-bar{background:var(--navy);display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px 20px;}
-.stat-chip{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:30px;padding:6px 14px;color:white;}
-.stat-icon{font-size:.95rem;}
-.stat-num{font-weight:800;font-size:.95rem;color:var(--accent);}
-.stat-lbl{font-size:.72rem;color:#cbd5e1;}
+    return title, problem, steps, final_answer
 
-/* SECTION CONTROLS */
-.section-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
-.generated-date{font-size:.8rem;color:var(--muted);}
-.btn-sm{padding:6px 14px;font-size:.76rem;}
 
-/* LAYOUT */
-.container{max-width:960px;margin:0 auto;padding:40px 20px;}
-.page{display:none;}.page.active{display:block;}
+def _initials(text, max_len=3):
+    """Turns 'Quantitative Aptitude' into 'QA' for the nav badge."""
+    if not text:
+        return "ILM"
+    words = [w for w in text.replace("&", " ").split() if w]
+    letters = "".join(w[0].upper() for w in words[:max_len])
+    return letters or text[:3].upper()
 
-/* STUDY SECTIONS */
-.study-section{background:var(--card);border-radius:16px;border:1px solid var(--border);margin-bottom:24px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);}
-.section-header{padding:18px 26px;display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none;background:linear-gradient(90deg,#f8faff,white);border-bottom:1px solid var(--border);}
-.section-header:hover{background:#f0f4ff;}
-.section-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;background:#dbeafe;}
-.section-header h2{font-size:1rem;font-weight:700;color:var(--navy);flex:1;}
-.section-header .toggle{color:var(--gray);font-size:1.1rem;transition:transform .3s;}
-.section-header.open .toggle{transform:rotate(180deg);}
-.section-body{padding:26px;display:none;}.section-body.open{display:block;}
 
-/* DEF BOXES */
-.def-box{border-left:4px solid var(--sky);background:linear-gradient(90deg,#f0f6ff,#f8fbff);border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:14px;}
-.def-box .def-title{font-weight:700;color:var(--navy);font-size:.97rem;margin-bottom:5px;display:flex;align-items:center;gap:8px;}
-.def-box .def-title span{background:var(--sky);color:white;font-size:.62rem;padding:2px 8px;border-radius:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
-.def-box p{color:var(--text);font-size:.93rem;}
+def generate_html(data):
+    css = Path("assets/style.css").read_text(encoding="utf-8")
+    js = Path("assets/script.js").read_text(encoding="utf-8")
 
-/* FORMULAS */
-.formula-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:14px 0;}
-.formula-card{background:var(--navy);color:white;border-radius:12px;padding:16px;}
-.formula-card .f-label{font-size:.72rem;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
-.formula-card .f-eq{font-family:'JetBrains Mono',monospace;font-size:.9rem;color:var(--accent);font-weight:600;line-height:1.7;}
-.formula-card .f-desc{font-size:.8rem;color:#cbd5e1;margin-top:8px;}
+    metadata = data.get("metadata", {})
+    topic = metadata.get("topic", "")
+    instructor = metadata.get("course_instructor", "")
+    department = metadata.get("department", "")
+    programme = metadata.get("programme", "")
+    subject = metadata.get("subject", "")
+    generated_on = metadata.get("generated_on") or datetime.now().strftime("%d %B %Y")
 
-/* WORKED EXAMPLE */
-.worked-example{background:#f0fdf8;border:1px solid #bbf7d0;border-radius:12px;padding:16px 18px;margin:12px 0;}
-.worked-example .we-q{font-weight:700;color:var(--navy);margin-bottom:8px;font-size:.93rem;}
-.worked-example .we-a{color:#065f46;font-size:.88rem;line-height:1.8;}
-.worked-example .we-a code{background:rgba(16,185,129,.12);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.83rem;font-weight:600;}
-.worked-example ol{margin:8px 0 8px 20px;}
+    badge_text = _initials(subject)
 
-/* NOTE BOX */
-.note-box{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:13px 16px;margin:12px 0;font-size:.86rem;color:#78350f;}
-.note-box strong{color:#92400e;}
+    # -----------------------------------------------------
+    # STUDY PAGE — accordion sections built from the JSON
+    # -----------------------------------------------------
+    study_sections = []
 
-/* KEY POINTS */
-.key-points{list-style:none;}
-.key-points li{padding:7px 0;border-bottom:1px solid #f1f5f9;padding-left:22px;position:relative;font-size:.91rem;}
-.key-points li::before{content:'▶';position:absolute;left:0;color:var(--sky);font-size:.6rem;top:11px;}
-.key-points li:last-child{border-bottom:none;}
+    # Section 1: Introduction + Learning Outcomes
+    intro_body = ""
+    if data.get("introduction"):
+        intro_body += f'<p style="margin-bottom:16px;">{data.get("introduction","")}</p>'
+    if data.get("learning_outcomes"):
+        intro_body += '<p style="font-weight:700;color:var(--navy);margin-bottom:8px;">🎯 Learning Outcomes</p>'
+        intro_body += '<ul class="key-points">'
+        for item in data.get("learning_outcomes", []):
+            intro_body += f"<li>{item}</li>"
+        intro_body += "</ul>"
+    if intro_body:
+        study_sections.append(("📖", "Introduction & Learning Outcomes", intro_body, True))
 
-/* SUMMARY */
-.summary-list{list-style:none;}
-.summary-list li{padding:8px 0;border-bottom:1px solid #f1f5f9;padding-left:22px;position:relative;font-size:.91rem;}
-.summary-list li::before{content:'✓';position:absolute;left:0;color:var(--accent2);font-weight:700;top:8px;}
-.summary-list li:last-child{border-bottom:none;}
+    # Section 2: Definitions
+    if data.get("definitions"):
+        body = ""
+        for d in data.get("definitions", []):
+            body += f'''
+<div class="def-box">
+<div class="def-title">{d.get("term","")} <span>Definition</span></div>
+<p>{d.get("meaning","")}</p>
+</div>
+'''
+        study_sections.append(("📚", "Definitions", body, True))
 
-/* FLASHCARDS */
-.flashcard{background:#fff8e1;border:1px solid #fde68a;border-left:5px solid var(--accent);padding:15px 18px;margin-bottom:14px;border-radius:0 10px 10px 0;}
-.flashcard button{margin-top:8px;}
+    # Section 3: Formulae + Worked Examples (kept together on the Study page too)
+    if data.get("formulae") or data.get("worked_examples"):
+        body = ""
+        if data.get("formulae"):
+            body += '<div class="formula-grid">'
+            for f in data.get("formulae", []):
+                body += f'''
+<div class="formula-card">
+<div class="f-label">{f.get("formula_name","")}</div>
+<div class="f-eq">{f.get("formula","")}</div>
+<div class="f-desc">{f.get("explanation","")}</div>
+</div>
+'''
+            body += "</div>"
+        for i, ex in enumerate(data.get("worked_examples", []), start=1):
+            title, problem, steps, final_answer = _normalize_worked_example(ex)
+            steps_html = "".join(f"<li>{s}</li>" for s in steps)
+            heading = f"Example {i}"
+            if title:
+                heading += f": {title}"
+            if problem:
+                heading += f" — {problem}"
+            body += f'''
+<div class="worked-example">
+<div class="we-q">{heading}</div>
+<div class="we-a"><ol>{steps_html}</ol>{f'<code>{final_answer}</code>' if final_answer else ''}</div>
+</div>
+'''
+        study_sections.append(("➗", "Formulae & Worked Examples", body, False))
 
-/* MCQ INTRO */
-.mcq-intro{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:40px;text-align:center;margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.05);}
-.mcq-intro h2{font-family:'Merriweather',serif;font-size:1.8rem;color:var(--navy);margin-bottom:10px;}
-.mcq-intro p{color:var(--muted);margin-bottom:28px;font-size:.93rem;}
+    # Section 4: Important Notes
+    if data.get("important_notes"):
+        body = '<div class="note-box"><strong>📝 Key Points:</strong><br>'
+        body += " &nbsp;|&nbsp; ".join(data.get("important_notes", []))
+        body += "</div>"
+        study_sections.append(("💡", "Important Notes", body, False))
 
-/* QUIZ */
-.quiz-container{display:none;}.quiz-container.active{display:block;}
-.quiz-header{background:var(--navy);color:white;border-radius:14px;padding:20px 26px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px;}
-.quiz-header .qh-left h3{font-size:1.05rem;font-weight:700;margin-bottom:3px;}
-.quiz-header .qh-left p{font-size:.8rem;color:#94a3b8;}
-.progress-bar-wrap{flex:1;min-width:150px;max-width:260px;}
-.progress-bar-label{font-size:.76rem;color:#94a3b8;margin-bottom:5px;display:flex;justify-content:space-between;}
-.progress-bar-bg{background:rgba(255,255,255,.15);border-radius:10px;height:7px;}
-.progress-bar-fill{background:var(--accent);border-radius:10px;height:7px;transition:width .4s;}
-.question-card{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:26px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.04);}
-.q-number{display:inline-block;background:var(--sky);color:white;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:10px;letter-spacing:1px;text-transform:uppercase;margin-bottom:13px;}
-.q-text{font-size:.98rem;font-weight:600;color:var(--navy);margin-bottom:18px;line-height:1.6;}
-.options{display:grid;gap:9px;}
-.option{display:flex;align-items:center;gap:13px;padding:12px 16px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;background:white;}
-.option:hover{border-color:var(--sky);background:#f0f6ff;}
-.option.selected{border-color:var(--sky);background:#eff6ff;}
-.option.correct{border-color:var(--accent2);background:#f0fdf4;}
-.option.wrong{border-color:var(--red);background:#fff5f5;}
-.option-key{width:29px;height:29px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:var(--muted);flex-shrink:0;transition:all .2s;}
-.option.selected .option-key{background:var(--sky);color:white;}
-.option.correct .option-key{background:var(--accent2);color:white;}
-.option.wrong .option-key{background:var(--red);color:white;}
-.option-text{font-size:.9rem;color:var(--text);}
-.explanation{display:none;margin-top:14px;padding:12px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;font-size:.86rem;color:#78350f;line-height:1.6;}
-.explanation.show{display:block;}
-.quiz-nav{display:flex;gap:12px;justify-content:flex-end;margin-top:8px;}
-.btn{padding:10px 22px;border-radius:10px;font-weight:600;font-size:.86rem;cursor:pointer;border:none;transition:all .2s;}
-.btn-primary{background:var(--sky);color:white;}.btn-primary:hover{background:#1d4ed8;}
-.btn-secondary{background:white;color:var(--navy);border:2px solid var(--border);}.btn-secondary:hover{border-color:var(--sky);color:var(--sky);}
-.btn-success{background:var(--accent2);color:white;}.btn-success:hover{background:#059669;}
+    # Section 5: Summary
+    if data.get("summary"):
+        summary_val = data.get("summary")
+        body = '<ul class="summary-list">'
+        if isinstance(summary_val, list):
+            for point in summary_val:
+                body += f"<li>{point}</li>"
+        else:
+            # Model returned a paragraph string instead of a list — show as-is
+            body += f"<li>{summary_val}</li>"
+        body += "</ul>"
+        study_sections.append(("📄", "Summary", body, False))
 
-/* RESULTS */
-.results-panel{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:40px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.05);display:none;}
-.results-panel.active{display:block;}
-.score-ring{width:120px;height:120px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 22px;font-size:2.2rem;font-weight:800;color:white;border:5px solid rgba(255,255,255,.3);background:var(--sky);}
-.score-ring .score-label{font-size:.68rem;font-weight:500;opacity:.85;letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
-.results-panel h3{font-family:'Merriweather',serif;font-size:1.5rem;color:var(--navy);margin-bottom:8px;}
-.results-panel p{color:var(--muted);margin-bottom:22px;}
-.result-stats{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-bottom:24px;}
-.result-stat{text-align:center;}
-.result-stat .rs-num{font-size:1.7rem;font-weight:800;}
-.result-stat .rs-lbl{font-size:.73rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
-.rs-correct .rs-num{color:var(--accent2);}.rs-wrong .rs-num{color:var(--red);}.rs-score .rs-num{color:var(--sky);}
-.review-table{width:100%;border-collapse:collapse;margin-top:22px;border-radius:10px;overflow:hidden;}
-.review-table th{background:var(--navy);color:white;padding:9px 12px;font-size:.8rem;text-align:left;}
-.review-table td{padding:9px 12px;font-size:.83rem;border-bottom:1px solid var(--border);vertical-align:top;}
-.review-table tr:nth-child(even) td{background:#f8faff;}
-.rv-exp{margin-top:6px;font-size:.78rem;color:#78350f;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;line-height:1.55;}
-.rv-correct{color:var(--accent2);font-weight:700;}.rv-wrong{color:var(--red);font-weight:700;}
+    # Section 6: Flashcards
+    if data.get("flashcards"):
+        body = ""
+        for i, card in enumerate(data.get("flashcards", []), start=1):
+            body += f'''
+<div class="flashcard">
+<strong>Q:</strong> {card.get("question","")}
+<button onclick="toggleFlashcard('flash{i}')">Show Answer</button>
+<div id="flash{i}" style="display:none; margin-top:10px;">{card.get("answer","")}</div>
+</div>
+'''
+        study_sections.append(("🗂", "Flashcards", body, False))
 
-/* FOOTER */
-footer{margin-top:50px;background:var(--navy);color:white;text-align:center;padding:40px 30px;}
-footer h3{margin:10px 0 4px;}
-.logo-block{margin-bottom:20px;}
-.college-logo{max-width:110px;max-height:110px;background:white;border-radius:50%;padding:8px;}
-.designed-by-label{font-size:14px;opacity:0.85;letter-spacing:0.5px;text-transform:uppercase;margin-top:10px;}
+    study_icons_bg = ["#dbeafe", "#dcfce7", "#fef3c7", "#fee2e2", "#ede9fe", "#fce7f3"]
+    study_html = ""
+    for idx, (icon, title, body, open_default) in enumerate(study_sections):
+        open_header = " open" if open_default else ""
+        open_body = " open" if open_default else ""
+        bg = study_icons_bg[idx % len(study_icons_bg)]
+        study_html += f'''
+<div class="study-section">
+<div class="section-header{open_header}" onclick="toggleSection(this)">
+<div class="section-icon" style="background:{bg};">{icon}</div>
+<h2>{title}</h2><span class="toggle">▼</span>
+</div>
+<div class="section-body{open_body}">{body}</div>
+</div>
+'''
 
-@media(max-width:768px){
-.container{padding:15px;}
-.hero-title{font-size:18px;}
-}
+    # -----------------------------------------------------
+    # FORMULAS PAGE — dedicated tab, formula grid only
+    # -----------------------------------------------------
+    formulas_page_html = ""
+    if data.get("formulae"):
+        formulas_page_html += '<div class="study-section"><div class="section-header open" onclick="toggleSection(this)">'
+        formulas_page_html += '<div class="section-icon" style="background:#dbeafe;">📋</div><h2>All Formulae</h2><span class="toggle">▼</span></div>'
+        formulas_page_html += '<div class="section-body open"><div class="formula-grid">'
+        for f in data.get("formulae", []):
+            formulas_page_html += f'''
+<div class="formula-card">
+<div class="f-label">{f.get("formula_name","")}</div>
+<div class="f-eq">{f.get("formula","")}</div>
+<div class="f-desc">{f.get("explanation","")}</div>
+</div>
+'''
+        formulas_page_html += "</div></div></div>"
+    else:
+        formulas_page_html = '<p style="text-align:center;color:var(--muted);">No formulae for this topic.</p>'
+
+    # -----------------------------------------------------
+    # MCQ DATA — passed to JS as JSON, single quiz, no tiers
+    # -----------------------------------------------------
+    quiz_data = []
+    for mcq in data.get("mcqs", []):
+        options = [
+            mcq.get("option_a", ""),
+            mcq.get("option_b", ""),
+            mcq.get("option_c", ""),
+            mcq.get("option_d", ""),
+        ]
+        correct_letter = (mcq.get("correct_answer", "") or "A").strip().upper()
+        correct_index = {"A": 0, "B": 1, "C": 2, "D": 3}.get(correct_letter, 0)
+        quiz_data.append({
+            "question": mcq.get("question", ""),
+            "options": options,
+            "correctIndex": correct_index,
+            "explanation": mcq.get("explanation", ""),
+        })
+    quiz_json = json.dumps(quiz_data)
+    quiz_count = len(quiz_data)
+
+    # -----------------------------------------------------
+    # STATS BAR (generic, works for any topic)
+    # -----------------------------------------------------
+    stats = [
+        ("📚", len(data.get("definitions", [])), "Definitions"),
+        ("➗", len(data.get("formulae", [])), "Formulae"),
+        ("✏️", len(data.get("worked_examples", [])), "Worked Examples"),
+        ("🗂", len(data.get("flashcards", [])), "Flashcards"),
+        ("✅", quiz_count, "Quiz Questions"),
+    ]
+    stats_html = '<div class="stats-bar">'
+    for icon, count, label in stats:
+        if count:
+            stats_html += f'<div class="stat-chip"><span class="stat-icon">{icon}</span><span class="stat-num">{count}</span><span class="stat-lbl">{label}</span></div>'
+    stats_html += "</div>"
+
+    # -----------------------------------------------------
+    # FOOTER
+    # -----------------------------------------------------
+    footer_html = "<footer>"
+    footer_html += '''
+<p class="designed-by-label">Designed by</p>
+<h3>Mrs Indhumathi T</h3>
+<p>Research Scholar</p>
+<p>Department of Mathematics</p>
+<p>SCSVMV (Deemed to be University), Kanchipuram</p>
+<br>
+<p>&copy; 2026 All Rights Reserved</p>
+</footer>
+'''
+
+    # -----------------------------------------------------
+    # ASSEMBLE FULL PAGE
+    # -----------------------------------------------------
+    html = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{topic or "Interactive Learning Material"}</title>
+<style>
+{css}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-badge"><span>{badge_text}</span></div>
+    <div class="nav-logo-text">
+      <span class="nav-logo-main">{subject}</span>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a class="active" onclick="showPage('study', this)">📖 Study</a>
+    <a onclick="showPage('formulas', this)">📋 Formulas</a>
+    <a onclick="showPage('mcq', this)">✏️ MCQ Test</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-content">
+    <h1 class="hero-title">{topic}</h1>
+    <div class="instructor-pill">
+      <div class="inst-details">
+        <span class="inst-label">Course Instructor</span>
+        <span class="inst-name">{instructor}</span>
+        <span class="inst-role">{department} &nbsp;·&nbsp; {programme}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+{stats_html}
+
+<div id="page-study" class="page active">
+<div class="container">
+<div class="section-controls">
+<span class="generated-date">Generated on {generated_on}</span>
+<div>
+<button class="btn btn-secondary btn-sm" onclick="expandAllSections()">Expand All</button>
+<button class="btn btn-secondary btn-sm" onclick="collapseAllSections()">Collapse All</button>
+<button class="btn btn-secondary btn-sm" onclick="printPage()">🖨 Print</button>
+</div>
+</div>
+{study_html}
+</div>
+</div>
+
+<div id="page-formulas" class="page">
+<div class="container">
+{formulas_page_html}
+</div>
+</div>
+
+<div id="page-mcq" class="page">
+<div class="container">
+
+<div class="mcq-intro" id="mcq-intro">
+<h2>✏️ MCQ Test</h2>
+<p>{quiz_count} questions on {topic}. Test your understanding and see your score at the end.</p>
+<button class="btn btn-primary" onclick="startQuiz()">🚀 Start Quiz</button>
+</div>
+
+<div class="quiz-container" id="quiz-container">
+<div class="quiz-header">
+<div class="qh-left">
+<h3>{topic} Quiz</h3>
+<p>Question <span id="qh-current">1</span> of <span id="qh-total">{quiz_count}</span></p>
+</div>
+<div class="progress-bar-wrap">
+<div class="progress-bar-label"><span>Progress</span></div>
+<div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+</div>
+</div>
+<div id="quiz-question-area"></div>
+</div>
+
+<div class="results-panel" id="results-panel">
+<div class="score-ring"><span id="score-pct">0%</span><span class="score-label">Score</span></div>
+<h3 id="results-title">Great Job! 🎉</h3>
+<p id="results-msg"></p>
+<div class="result-stats">
+<div class="result-stat rs-correct"><div class="rs-num" id="rs-correct">0</div><div class="rs-lbl">Correct</div></div>
+<div class="result-stat rs-wrong"><div class="rs-num" id="rs-wrong">0</div><div class="rs-lbl">Wrong</div></div>
+<div class="result-stat rs-score"><div class="rs-num" id="rs-score">0%</div><div class="rs-lbl">Score</div></div>
+</div>
+<button class="btn btn-secondary" onclick="retakeQuiz()">🔄 Retake Quiz</button>
+<div id="review-area" style="text-align:left;margin-top:10px;"></div>
+</div>
+
+</div>
+</div>
+
+{footer_html}
+
+<script>
+window.__ILM_MCQS__ = {quiz_json};
+{js}
+</script>
+</body>
+</html>
+"""
+    return html
