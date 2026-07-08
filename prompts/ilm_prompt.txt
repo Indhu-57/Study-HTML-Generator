@@ -94,17 +94,58 @@ applied at least once. Each worked example must contain:
 
 • title — short name of what is being demonstrated
 • problem — the question/problem statement
-• steps — a list of individual solution steps, in order. Each step string
+• steps — a list of individual solution steps, in order, following the
+  reasoning EXACTLY as shown in the study material — do not compress,
+  paraphrase, or skip any step the material shows. Each step string
   must NOT start with its own number or the word "Step" (e.g. do not write
   "1. Recall the rule..." or "Step 1: Recall the rule..." — just write
-  "Recall the rule..."), since steps are numbered automatically when
-  displayed.
+  "Recall the rule..."), since each step is already displayed on its own
+  line automatically.
 • solution — the final answer only (a short string, not the steps list)
 
 Write all mathematical expressions using plain caret notation for
 exponents, e.g. (a + b)^2, x^3589, a^n — do not use Unicode superscript
 characters or LaTeX; the display layer converts ^ into proper
 superscripts automatically.
+
+==================================================
+DIAGRAMS (Venn diagrams only)
+==================================================
+
+If — and only if — the topic involves sets and Venn/Euler diagrams
+(unions, intersections, complements, set differences, counting elements
+in overlapping sets, De Morgan's laws, etc.), attach an optional
+"diagram" field to the relevant definitions, worked_examples, and/or
+practice_problems entries so the reader can see the actual diagram, not
+just a text description of it. Do NOT add a "diagram" field for any
+other kind of topic (do not invent diagrams for non-set-theory content).
+
+The "diagram" field, when included, must look like exactly one of:
+
+  {"type": "venn2", "labels": ["A", "B"], "shaded": ["A_and_B"], "values": {"A_only": 17, "B_only": 10, "A_and_B": 8}}
+  {"type": "venn3", "labels": ["A", "B", "C"], "shaded": ["A_and_B_and_C"], "values": {}}
+
+Rules:
+• "type" is "venn2" for two-set problems, "venn3" for three-set problems.
+• "labels" is the real set names/letters used in the material (usually
+  ["A","B"] or ["A","B","C"]).
+• "shaded" is optional — a list of region keys to highlight, using ONLY
+  these exact keys:
+    venn2: A_only, B_only, A_and_B, outside
+    venn3: A_only, B_only, C_only, A_and_B_only, A_and_C_only,
+           B_and_C_only, A_and_B_and_C, outside
+  Only include "shaded" if the material is illustrating a specific
+  region (e.g. shading A ∩ B to show intersection, or shading "outside"
+  to show a complement). Omit it entirely for problems that are just
+  about counting elements with no specific region being highlighted.
+• "values" is optional — a mapping of the same region keys above to the
+  number of elements in that region, ONLY if the problem gives or asks
+  for actual counts (n(A), n(A ∩ B), etc.). Omit it if the problem is
+  purely about laws/identities with no numeric counts.
+• Do not attach a diagram to every single item — only where a diagram
+  would genuinely help (e.g. attach it to the Venn Diagram / Union /
+  Intersection / Complement definitions, and to worked examples or
+  practice problems that are themselves Venn-diagram-based sums).
 
 ==================================================
 IMPORTANT NOTES
