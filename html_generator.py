@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 from venn import render_venn_svg
+from charts import build_chart_config
 
 
 _EXPONENT_RE = re.compile(r'\^(\([^)]*\)|-?[A-Za-z0-9]+)')
@@ -77,6 +78,36 @@ def _initials(text, max_len=3):
 def generate_html(data):
     css = Path("assets/style.css").read_text(encoding="utf-8")
     js = Path("assets/script.js").read_text(encoding="utf-8")
+
+    # Chart.js needs its configs registered as JS + a <canvas> placeholder;
+    # collect them here as we walk the data, then inject once at the end.
+    chart_registry = []
+
+    def _diagram_html(spec, idx):
+        """
+        Dispatches a "diagram" spec to the right renderer:
+        - venn2/venn3  -> inline static SVG (no JS needed)
+        - bar/line/pie/function_graph -> a <canvas> placeholder + a
+          registered Chart.js config, instantiated by script.js on load.
+        Returns HTML (possibly empty string) — never raises.
+        """
+        if not isinstance(spec, dict):
+            return ""
+        kind = spec.get("type")
+
+        if kind in ("venn2", "venn3"):
+            svg = render_venn_svg(spec, idx=idx)
+            return f'<div class="diagram-box">{svg}</div>' if svg else ""
+
+        if kind in ("bar", "line", "pie", "function_graph"):
+            config = build_chart_config(spec)
+            if not config:
+                return ""
+            canvas_id = f"chart_{idx}"
+            chart_registry.append({"canvasId": canvas_id, "config": config})
+            return f'<div class="diagram-box"><canvas id="{canvas_id}"></canvas></div>'
+
+        return ""
 
     metadata = data.get("metadata", {})
     topic = metadata.get("topic", "")
@@ -153,8 +184,7 @@ def generate_html(data):
                 for ex in examples:
                     examples_html += f"<li>{_format_math(ex)}</li>"
                 examples_html += "</ul></div>"
-            diagram_svg = render_venn_svg(d.get("diagram"), idx=f"def{idx}")
-            diagram_html = f'<div class="diagram-box">{diagram_svg}</div>' if diagram_svg else ""
+            diagram_html = _diagram_html(d.get("diagram"), f"def{idx}")
             definitions_html += f'''
 <div class="def-box">
 <div class="def-title">{d.get("term","")}</div>
@@ -182,8 +212,7 @@ def generate_html(data):
             if problem:
                 heading += f" — {_format_math(problem)}"
             final_html = f'<div class="step-answer">Answer: {_format_math(final_answer)}</div>' if final_answer else ""
-            diagram_svg = render_venn_svg(ex.get("diagram"), idx=f"we{i}")
-            diagram_html = f'<div class="diagram-box">{diagram_svg}</div>' if diagram_svg else ""
+            diagram_html = _diagram_html(ex.get("diagram"), f"we{i}")
             examples_page_html += f'''
 <div class="worked-example">
 <div class="we-q">{heading}</div>
@@ -202,8 +231,7 @@ def generate_html(data):
         for i, pp in enumerate(data.get("practice_problems", []), start=1):
             problem = _format_math(pp.get("problem", ""))
             answer = _format_math(pp.get("answer", ""))
-            diagram_svg = render_venn_svg(pp.get("diagram"), idx=f"pp{i}")
-            diagram_html = f'<div class="diagram-box">{diagram_svg}</div>' if diagram_svg else ""
+            diagram_html = _diagram_html(pp.get("diagram"), f"pp{i}")
             examples_page_html += f'''
 <div class="practice-card">
 <strong>Problem {i}:</strong> {problem}
@@ -284,6 +312,7 @@ def generate_html(data):
 <style>
 {css}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>
 
@@ -391,6 +420,7 @@ def generate_html(data):
 
 <script>
 window.__ILM_MCQS__ = {quiz_json};
+window.__ILM_CHARTS__ = {json.dumps(chart_registry)};
 {js}
 </script>
 </body>
