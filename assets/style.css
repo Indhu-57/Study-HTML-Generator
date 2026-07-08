@@ -61,6 +61,8 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 .def-box .def-title{font-weight:700;color:var(--navy);font-size:.97rem;margin-bottom:5px;display:flex;align-items:center;gap:8px;}
 .def-box .def-title span{background:var(--sky);color:white;font-size:.62rem;padding:2px 8px;border-radius:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
 .def-box p{color:var(--text);font-size:.93rem;}
+.diagram-box{background:#fbfdff;border:1px solid var(--border);border-radius:10px;padding:14px;margin:12px 0;display:flex;justify-content:center;}
+.diagram-box svg{max-width:340px;}
 .def-examples{margin-top:10px;padding-top:10px;border-top:1px dashed rgba(37,99,235,.25);}
 .def-examples strong{color:var(--navy);font-size:.85rem;}
 .def-examples ul{margin-top:6px;}
@@ -75,10 +77,9 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 /* WORKED EXAMPLE */
 .worked-example{background:#f0fdf8;border:1px solid #bbf7d0;border-radius:12px;padding:16px 18px;margin:12px 0;}
 .worked-example .we-q{font-weight:700;color:var(--navy);margin-bottom:12px;font-size:.95rem;}
-.step-list{display:flex;flex-direction:column;gap:8px;counter-reset:stepcounter;}
-.step-row{display:flex;align-items:flex-start;gap:10px;counter-increment:stepcounter;}
-.step-num{width:22px;height:22px;border-radius:50%;background:var(--accent2);flex-shrink:0;margin-top:2px;}
-.step-num::before{content:counter(stepcounter);display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:white;font-size:.72rem;font-weight:700;}
+.step-list{display:flex;flex-direction:column;gap:2px;}
+.step-line{color:#065f46;font-size:.89rem;line-height:1.75;padding:6px 0;border-bottom:1px dashed rgba(6,95,70,.15);}
+.step-line:last-child{border-bottom:none;}
 .step-text{color:#065f46;font-size:.89rem;line-height:1.6;padding-top:1px;}
 .step-answer{margin-top:14px;padding:10px 14px;background:#065f46;color:white;border-radius:8px;font-size:.87rem;font-weight:600;}
 .worked-example sup{font-size:.7em;}
