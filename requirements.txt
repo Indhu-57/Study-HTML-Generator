@@ -1,4 +1,10 @@
 streamlit
 supabase
-PyMuPDF
 google-genai
+PyMuPDF
+python-docx
+pytesseract
+Pillow
+EbookLib
+beautifulsoup4
+lxml
