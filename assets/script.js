@@ -3,6 +3,35 @@
 // ==========================================
 
 // ----------------------------
+// Charts (bar/line/pie/function graphs)
+// ----------------------------
+window.__ILM_CHART_INSTANCES__ = {};
+
+(function renderRegisteredCharts() {
+    var charts = window.__ILM_CHARTS__ || [];
+    if (!charts.length) return;
+
+    function init() {
+        charts.forEach(function (entry) {
+            var canvas = document.getElementById(entry.canvasId);
+            if (!canvas || typeof Chart === 'undefined') return;
+            try {
+                var instance = new Chart(canvas.getContext('2d'), entry.config);
+                window.__ILM_CHART_INSTANCES__[entry.canvasId] = instance;
+            } catch (e) {
+                console.error('Chart render failed for', entry.canvasId, e);
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+
+// ----------------------------
 // Accordion sections
 // ----------------------------
 function toggleSection(headerEl) {
@@ -32,12 +61,20 @@ function showPage(pageId, linkEl) {
     document.querySelectorAll('.page').forEach(function (p) {
         p.classList.remove('active');
     });
-    document.getElementById('page-' + pageId).classList.add('active');
+    var target = document.getElementById('page-' + pageId);
+    target.classList.add('active');
 
     document.querySelectorAll('.nav-links a').forEach(function (a) {
         a.classList.remove('active');
     });
     if (linkEl) linkEl.classList.add('active');
+
+    // Charts created while their tab was hidden render at zero size;
+    // resize them now that the tab is actually visible.
+    target.querySelectorAll('canvas').forEach(function (c) {
+        var inst = window.__ILM_CHART_INSTANCES__[c.id];
+        if (inst) inst.resize();
+    });
 }
 
 // ----------------------------
