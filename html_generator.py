@@ -3,6 +3,8 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+from venn import render_venn_svg
+
 
 _EXPONENT_RE = re.compile(r'\^(\([^)]*\)|-?[A-Za-z0-9]+)')
 _LEADING_STEP_NUM_RE = re.compile(r'^\s*(?:step\s*)?\d+\s*[\.\):]\s*', re.IGNORECASE)
@@ -143,7 +145,7 @@ def generate_html(data):
     # -----------------------------------------------------
     definitions_html = ""
     if data.get("definitions"):
-        for d in data.get("definitions", []):
+        for idx, d in enumerate(data.get("definitions", [])):
             examples = d.get("examples", [])
             examples_html = ""
             if examples:
@@ -151,10 +153,13 @@ def generate_html(data):
                 for ex in examples:
                     examples_html += f"<li>{_format_math(ex)}</li>"
                 examples_html += "</ul></div>"
+            diagram_svg = render_venn_svg(d.get("diagram"), idx=f"def{idx}")
+            diagram_html = f'<div class="diagram-box">{diagram_svg}</div>' if diagram_svg else ""
             definitions_html += f'''
 <div class="def-box">
 <div class="def-title">{d.get("term","")}</div>
 <p>{_format_math(d.get("meaning",""))}</p>
+{diagram_html}
 {examples_html}
 </div>
 '''
@@ -172,14 +177,17 @@ def generate_html(data):
             for step in steps:
                 cleaned = _clean_step(step)
                 if cleaned:
-                    steps_html += f'<div class="step-row"><div class="step-num"></div><div class="step-text">{cleaned}</div></div>'
+                    steps_html += f'<p class="step-line">{cleaned}</p>'
             heading = _format_math(title) if title else "Worked Example"
             if problem:
                 heading += f" — {_format_math(problem)}"
             final_html = f'<div class="step-answer">Answer: {_format_math(final_answer)}</div>' if final_answer else ""
+            diagram_svg = render_venn_svg(ex.get("diagram"), idx=f"we{i}")
+            diagram_html = f'<div class="diagram-box">{diagram_svg}</div>' if diagram_svg else ""
             examples_page_html += f'''
 <div class="worked-example">
 <div class="we-q">{heading}</div>
+{diagram_html}
 <div class="step-list">{steps_html}</div>
 {final_html}
 </div>
@@ -194,9 +202,12 @@ def generate_html(data):
         for i, pp in enumerate(data.get("practice_problems", []), start=1):
             problem = _format_math(pp.get("problem", ""))
             answer = _format_math(pp.get("answer", ""))
+            diagram_svg = render_venn_svg(pp.get("diagram"), idx=f"pp{i}")
+            diagram_html = f'<div class="diagram-box">{diagram_svg}</div>' if diagram_svg else ""
             examples_page_html += f'''
 <div class="practice-card">
 <strong>Problem {i}:</strong> {problem}
+{diagram_html}
 <button onclick="toggleReveal('practice{i}')">Show Answer</button>
 <div id="practice{i}" style="display:none; margin-top:10px;">{answer}</div>
 </div>
