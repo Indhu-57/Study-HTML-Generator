@@ -5,7 +5,8 @@
     {
       "term": "",
       "meaning": "",
-      "examples": []
+      "examples": [],
+      "diagram": "OPTIONAL - venn2/venn3/function_graph/bar/line/pie. See DIAGRAMS section in the prompt for the exact required shape for each type. Omit this key entirely if no diagram is needed."
     }
   ],
   "formulae": [
@@ -20,7 +21,8 @@
       "title": "",
       "problem": "",
       "steps": [],
-      "solution": ""
+      "solution": "",
+      "diagram": "OPTIONAL - venn2/venn3/function_graph/bar/line/pie. See DIAGRAMS section in the prompt for the exact required shape for each type. Omit this key entirely if no diagram is needed."
     }
   ],
   "important_notes": [],
@@ -28,7 +30,8 @@
   "practice_problems": [
     {
       "problem": "",
-      "answer": ""
+      "answer": "",
+      "diagram": "OPTIONAL - venn2/venn3/function_graph/bar/line/pie. See DIAGRAMS section in the prompt for the exact required shape for each type. Omit this key entirely if no diagram is needed."
     }
   ],
   "mcqs": [
