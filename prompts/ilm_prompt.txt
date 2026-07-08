@@ -208,23 +208,29 @@ Return ONLY valid JSON, matching this structure exactly:
   "introduction": "",
   "learning_outcomes": [],
   "definitions": [
-    {"term": "", "meaning": "", "examples": []}
+    {"term": "", "meaning": "", "examples": [], "diagram": null}
   ],
   "formulae": [
     {"formula_name": "", "formula": "", "explanation": ""}
   ],
   "worked_examples": [
-    {"title": "", "problem": "", "steps": [], "solution": ""}
+    {"title": "", "problem": "", "steps": [], "solution": "", "diagram": null}
   ],
   "important_notes": [],
   "summary": [],
   "practice_problems": [
-    {"problem": "", "answer": ""}
+    {"problem": "", "answer": "", "diagram": null}
   ],
   "mcqs": [
     {"question": "", "option_a": "", "option_b": "", "option_c": "", "option_d": "", "correct_answer": "", "explanation": ""}
   ]
 }
+
+The "diagram" key above is shown as null only to indicate where it goes.
+Whenever a diagram is actually appropriate for that item (per the
+DIAGRAMS section above), replace null with the real diagram object
+described there. When no diagram is appropriate, you may set it to null
+or omit the key entirely for that item.
 
 Do not return markdown.
 Do not return explanations.
