@@ -109,43 +109,55 @@ characters or LaTeX; the display layer converts ^ into proper
 superscripts automatically.
 
 ==================================================
-DIAGRAMS (Venn diagrams only)
+DIAGRAMS
 ==================================================
 
-If — and only if — the topic involves sets and Venn/Euler diagrams
-(unions, intersections, complements, set differences, counting elements
-in overlapping sets, De Morgan's laws, etc.), attach an optional
-"diagram" field to the relevant definitions, worked_examples, and/or
-practice_problems entries so the reader can see the actual diagram, not
-just a text description of it. Do NOT add a "diagram" field for any
-other kind of topic (do not invent diagrams for non-set-theory content).
+If a diagram would genuinely help explain a definition, worked example,
+or practice problem, attach an optional "diagram" field to that entry.
+Do NOT add a diagram to every item — only where the source material
+itself shows or implies a diagram/graph/chart, or where the concept is
+inherently visual (e.g. a wave equation, a data comparison, a set
+relationship). Never invent a diagram for a purely textual/definitional
+topic that has no visual component.
 
-The "diagram" field, when included, must look like exactly one of:
+The "diagram" field must be exactly one of the following shapes:
 
-  {"type": "venn2", "labels": ["A", "B"], "shaded": ["A_and_B"], "values": {"A_only": 17, "B_only": 10, "A_and_B": 8}}
-  {"type": "venn3", "labels": ["A", "B", "C"], "shaded": ["A_and_B_and_C"], "values": {}}
+1) VENN/EULER DIAGRAMS (sets, unions, intersections, complements):
 
-Rules:
-• "type" is "venn2" for two-set problems, "venn3" for three-set problems.
-• "labels" is the real set names/letters used in the material (usually
-  ["A","B"] or ["A","B","C"]).
-• "shaded" is optional — a list of region keys to highlight, using ONLY
-  these exact keys:
-    venn2: A_only, B_only, A_and_B, outside
-    venn3: A_only, B_only, C_only, A_and_B_only, A_and_C_only,
-           B_and_C_only, A_and_B_and_C, outside
-  Only include "shaded" if the material is illustrating a specific
-  region (e.g. shading A ∩ B to show intersection, or shading "outside"
-  to show a complement). Omit it entirely for problems that are just
-  about counting elements with no specific region being highlighted.
-• "values" is optional — a mapping of the same region keys above to the
-  number of elements in that region, ONLY if the problem gives or asks
-  for actual counts (n(A), n(A ∩ B), etc.). Omit it if the problem is
-  purely about laws/identities with no numeric counts.
-• Do not attach a diagram to every single item — only where a diagram
-  would genuinely help (e.g. attach it to the Venn Diagram / Union /
-  Intersection / Complement definitions, and to worked examples or
-  practice problems that are themselves Venn-diagram-based sums).
+   {"type": "venn2", "labels": ["A", "B"], "shaded": ["A_and_B"], "values": {"A_only": 17, "B_only": 10, "A_and_B": 8}}
+   {"type": "venn3", "labels": ["A", "B", "C"], "shaded": ["A_and_B_and_C"], "values": {}}
+
+   "shaded" region keys — venn2: A_only, B_only, A_and_B, outside
+                          venn3: A_only, B_only, C_only, A_and_B_only,
+                                 A_and_C_only, B_and_C_only,
+                                 A_and_B_and_C, outside
+   "shaded" and "values" are both optional; omit either if not relevant.
+
+2) FUNCTION GRAPHS (parabolas, sine/cosine waves, any single-variable
+   function y = f(x) — including wave diagrams in physics):
+
+   {"type": "function_graph", "expression": "x^2 - 4", "x_min": -5, "x_max": 5, "title": "y = x^2 - 4", "x_label": "x", "y_label": "y"}
+   {"type": "function_graph", "expression": "2*sin(3*x)", "x_min": 0, "x_max": 6.28, "title": "y = 2sin(3x)"}
+
+   "expression" must use ONLY the variable x, the operators + - * / ^ %,
+   and these functions: sin, cos, tan, sqrt, log, log10, exp, abs, plus
+   the constants pi and e. Use ^ for powers (e.g. x^2), not **. Do not
+   use any other function or variable name — anything else will be
+   rejected automatically. "x_min"/"x_max" should be sensible for the
+   problem (e.g. one full period for a wave).
+
+3) DATA CHARTS (bar/line/pie — comparisons, distributions, statistics
+   problems):
+
+   {"type": "bar", "title": "Student Marks", "labels": ["Alice","Bob","Carol"], "data": [85,72,90], "x_label": "Student", "y_label": "Marks"}
+   {"type": "line", "title": "Population Growth", "labels": ["2020","2021","2022"], "data": [100,120,135], "x_label": "Year", "y_label": "Population"}
+   {"type": "pie", "title": "Market Share", "labels": ["A","B","C"], "data": [40,35,25]}
+
+   "labels" and "data" must be the same length. Use real numbers from
+   the material where given; do not invent data values that aren't in
+   or implied by the source material.
+
+Only use these exact shapes. Do not add any other diagram "type" value.
 
 ==================================================
 IMPORTANT NOTES
