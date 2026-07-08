@@ -1,7 +1,10 @@
 import json
+import time
+
 import streamlit as st
 from google import genai
 from google.genai import types
+from google.genai.errors import ServerError
 
 # ==========================================
 # GEMINI CLIENT
@@ -9,6 +12,9 @@ from google.genai import types
 client = genai.Client(
     api_key=st.secrets["GEMINI_API_KEY"]
 )
+
+MAX_RETRIES = 3
+RETRY_DELAY_SECONDS = 8  # doubles each retry: 8s, 16s, 32s
 
 
 # ==========================================
@@ -42,22 +48,38 @@ The generated JSON MUST follow this schema:
 Study Material
 {extracted_text}
 """
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=final_prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            # Large (up to ~200 page) uploads produce a lot of definitions,
-            # examples, and MCQs — raise the output ceiling so the JSON
-            # doesn't get cut off mid-response and fail to parse.
-            max_output_tokens=65536,
-        )
-    )
 
-    if not response.text:
-        raise ValueError(
-            "Gemini returned an empty response. This can happen if the "
-            "output was cut off — try uploading fewer pages at once."
-        )
+    last_error = None
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=final_prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    max_output_tokens=65536,
+                )
+            )
 
-    return json.loads(response.text)
+            if not response.text:
+                raise ValueError(
+                    "Gemini returned an empty response. This can happen if the "
+                    "output was cut off — try uploading fewer pages at once."
+                )
+
+            return json.loads(response.text)
+
+        except ServerError as e:
+            last_error = e
+            is_overloaded = getattr(e, "code", None) == 503 or "UNAVAILABLE" in str(e)
+            if is_overloaded and attempt < MAX_RETRIES:
+                wait_seconds = RETRY_DELAY_SECONDS * (2 ** (attempt - 1))
+                st.warning(
+                    f"Gemini is experiencing high demand (attempt {attempt}/{MAX_RETRIES}). "
+                    f"Retrying in {wait_seconds} seconds..."
+                )
+                time.sleep(wait_seconds)
+                continue
+            raise
+
+    raise last_error
