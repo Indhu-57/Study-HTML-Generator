@@ -13,8 +13,8 @@ client = genai.Client(
     api_key=st.secrets["GEMINI_API_KEY"]
 )
 
-MAX_RETRIES = 3
-RETRY_DELAY_SECONDS = 8  # doubles each retry: 8s, 16s, 32s
+MAX_RETRIES = 5
+RETRY_DELAY_SECONDS = 8  # doubles each retry: 8s, 16s, 32s, 64s, 128s
 
 
 # ==========================================
