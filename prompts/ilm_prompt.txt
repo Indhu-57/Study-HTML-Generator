@@ -120,6 +120,18 @@ inherently visual (e.g. a wave equation, a data comparison, a set
 relationship). Never invent a diagram for a purely textual/definitional
 topic that has no visual component.
 
+EXCEPTION — if the study material is about sets / Venn-Euler diagrams
+(topics like union, intersection, complement, set difference, De Morgan's
+laws, or any set-operation concept), then EVERY definitions entry for
+that topic MUST include a "diagram" field — this is not optional for
+this subject area. Choose venn2 or venn3 and "shaded" region(s) that
+correctly and specifically illustrate that exact term (e.g. the
+"Intersection" definition shades A_and_B; the "Complement" definition
+shades "outside"; the "Set Difference (A − B)" definition shades
+"A_only"). Do not attach a generic unshaded diagram to a definition
+that is describing one specific region — the shading must match the
+term being defined.
+
 The "diagram" field must be exactly one of the following shapes:
 
 1) VENN/EULER DIAGRAMS (sets, unions, intersections, complements):
@@ -132,6 +144,40 @@ The "diagram" field must be exactly one of the following shapes:
                                  A_and_C_only, B_and_C_only,
                                  A_and_B_and_C, outside
    "shaded" and "values" are both optional; omit either if not relevant.
+
+   IMPORTANT — for any worked_example or practice_problem that includes a
+   Venn diagram with numeric "values" (a counting/statistics problem, e.g.
+   "how many students play all three sports"), the "steps" for that
+   problem must show the FULL region-by-region reasoning, not just the
+   final formula. Follow this pattern (matching standard textbook style):
+     1. State the given values (n(A), n(B), n(A∩B), etc.).
+     2. Write the relevant formula (e.g. the inclusion-exclusion principle).
+     3. Substitute the given values into the formula.
+     4. Solve for the unknown quantity asked in the problem.
+     5. Break down every remaining region (only A, only B, only C, each
+        pairwise overlap, the triple overlap, and "none/outside" if
+        relevant) so every number in the "values" object of the diagram
+        is individually justified by a step, not just asserted.
+   Do not skip step 5 — a Venn diagram with numbers in every region but no
+   step explaining where each number came from is not acceptable.
+
+   ACCURACY CHECK (mandatory before finalizing any diagram with "values"):
+   • Every arithmetic operation in the "steps" must be computed correctly
+     — re-check each addition, subtraction, and substitution before
+     writing the final number down.
+   • The region values you place in "values" must be internally
+     consistent: for venn2, A_only + B_only + A_and_B (+ outside, if
+     given) must add up to the stated total population of the problem.
+     For venn3, all 7 regions (+ outside, if given) must add up to the
+     stated total.
+   • The "solution" field's final answer must exactly match the number
+     you placed in the corresponding region of "values" — never state
+     one answer in the steps/solution and put a different number in the
+     diagram.
+   • If you cannot make the numbers in a problem consistent (e.g. the
+     source material's data doesn't add up), do not silently invent a
+     number to force consistency — reproduce the material's original
+     numbers as given, even if they don't perfectly reconcile.
 
 2) FUNCTION GRAPHS (parabolas, sine/cosine waves, any single-variable
    function y = f(x) — including wave diagrams in physics):
