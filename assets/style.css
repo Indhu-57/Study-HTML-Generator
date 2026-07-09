@@ -62,7 +62,7 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 .def-box .def-title span{background:var(--sky);color:white;font-size:.62rem;padding:2px 8px;border-radius:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
 .def-box p{color:var(--text);font-size:.93rem;}
 .diagram-box{background:#fbfdff;border:1px solid var(--border);border-radius:10px;padding:14px;margin:12px 0;display:flex;justify-content:center;}
-.diagram-box svg{max-width:340px;}
+.diagram-box svg{max-width:280px;}
 .def-examples{margin-top:10px;padding-top:10px;border-top:1px dashed rgba(37,99,235,.25);}
 .def-examples strong{color:var(--navy);font-size:.85rem;}
 .def-examples ul{margin-top:6px;}
