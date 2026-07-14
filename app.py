@@ -2,7 +2,7 @@ import streamlit as st
 from supabase import create_client
 
 from storage import upload_file, save_uploaded_file
-from extract import extract_pdf_text
+from extract import extract_text
 from gemini import generate_learning_material
 from html_generator import generate_html
 
@@ -156,18 +156,24 @@ if st.button("🚀 Generate Interactive Learning Material"):
 
         # ===========================================
         # Extract Text
+        # (dispatches to the right extractor for PDF / DOCX / TXT
+        # based on the file's extension, instead of assuming PDF)
         # ===========================================
 
-        if study_file.type == "application/pdf":
-
-            extracted_text = extract_pdf_text(
-                study_file.getvalue()
+        try:
+            extracted_text, _page_count = extract_text(
+                study_file.getvalue(),
+                study_file.name
             )
+        except ValueError as e:
+            st.error(str(e))
+            st.stop()
 
-        else:
-
-            st.error("Currently only PDF files are supported.")
-
+        if not extracted_text or not extracted_text.strip():
+            st.error(
+                "No text could be extracted from this file. It may be "
+                "empty, corrupted, or an unsupported format."
+            )
             st.stop()
 
         st.success("Text Extracted Successfully")
