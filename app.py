@@ -3,7 +3,7 @@ from supabase import create_client
 
 from storage import upload_file, save_uploaded_file
 from extract import extract_text
-from gemini import generate_learning_material
+from gemini import generate_learning_material, SUPPORTED_LANGUAGES
 from html_generator import generate_html
 
 # =====================================================
@@ -71,6 +71,13 @@ subject = st.text_input(
 topic = st.text_input(
     "Topic",
     placeholder="e.g. Travelling Salesman Problem"
+)
+
+language = st.selectbox(
+    "Output Language",
+    SUPPORTED_LANGUAGES,
+    index=0,
+    help="The generated study material will be written in this language."
 )
 
 # =====================================================
@@ -193,7 +200,8 @@ if st.button("🚀 Generate Interactive Learning Material"):
         with st.spinner("Generating Learning Material using Gemini..."):
 
             result = generate_learning_material(
-                extracted_text
+                extracted_text,
+                language
             )
 
         st.success("Gemini Response Generated Successfully")
