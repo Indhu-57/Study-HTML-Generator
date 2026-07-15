@@ -5,16 +5,44 @@ Your task is to generate high-quality Interactive Learning Material (ILM) from t
 The generated learning material must be suitable for undergraduate and postgraduate university students.
 
 ==================================================
-STEP 1 — IDENTIFY ALL TOPICS FIRST
+STEP 1 — CLASSIFY THE SUBJECT
+==================================================
+
+Before writing anything else, decide whether this study material is:
+
+(a) QUANTITATIVE / TECHNICAL — the material is built around formulae,
+    calculations, proofs, diagrams, or step-by-step numerical/symbolic
+    problem-solving (e.g. Mathematics, Physics, Statistics, Engineering,
+    Operations Research, Computer Science algorithms).
+
+(b) THEORY-BASED — the material is built around concepts, explanations,
+    skills, or discursive knowledge rather than calculation (e.g.
+    Language and Communication Skills, Literature, History, Management
+    Concepts, Law, Sociology, Education, most Humanities and Arts
+    subjects).
+
+This decision determines which of the two content structures below you
+use — see "DEFINITIONS, FORMULAE & WORKED EXAMPLES" vs. "CONCEPT GROUPS".
+Use ONLY ONE of these two structures for a given document, never both:
+- QUANTITATIVE subjects → use "definitions", "formulae", "worked_examples".
+- THEORY-BASED subjects → use "concept_groups" instead, and leave
+  "definitions", "formulae", and "worked_examples" as empty arrays.
+
+If a document is mixed (mostly theory-based but has a few small
+technical/numeric parts, or vice versa), classify it by whichever style
+dominates the material overall.
+
+==================================================
+STEP 2 — IDENTIFY ALL TOPICS FIRST
 ==================================================
 
 Before writing anything else, read the complete study material carefully and
 identify EVERY distinct topic and sub-topic it covers. Do not skip any
 topic, even a small one, and do not merge two distinct topics into one.
 
-Use this list of topics internally to make sure the Definitions, Formulae,
-and Worked Examples sections below cover ALL of them — not just the first
-or most obvious topic in the material.
+Use this list of topics internally to make sure the content sections below
+cover ALL of them — not just the first or most obvious topic in the
+material.
 
 ==================================================
 GENERAL RULES
@@ -23,7 +51,8 @@ GENERAL RULES
 1. Do NOT invent information.
 2. Use only the concepts present in the study material.
 3. If some information is missing, leave that section empty.
-4. Write in clear academic English.
+4. Write in clear academic English (unless a different output language is
+   explicitly requested elsewhere in this prompt).
 5. Explain difficult concepts in simple language.
 6. Maintain technical correctness.
 7. Avoid unnecessary repetition.
@@ -40,9 +69,8 @@ Generate:
 
 • Introduction
 • Learning Outcomes
-• Definitions (covering every topic identified in Step 1)
-• Formulae (only if applicable)
-• Worked Examples
+• EITHER (Definitions + Formulae + Worked Examples) OR (Concept Groups)
+  — whichever matches the subject type decided in Step 1
 • Important Notes
 • Summary
 • Practice Problems
@@ -57,11 +85,19 @@ Every learning outcome must begin with an action verb (Understand, Explain,
 Analyse, Apply, Evaluate, etc.).
 
 ==================================================
-DEFINITIONS
+DEFINITIONS, FORMULAE & WORKED EXAMPLES  (QUANTITATIVE / TECHNICAL subjects only)
 ==================================================
 
+If you classified the subject as QUANTITATIVE/TECHNICAL in Step 1, generate
+these three sections and leave "concept_groups" as an empty array.
+If you classified it as THEORY-BASED, skip this whole section — leave
+"definitions", "formulae", and "worked_examples" as empty arrays, and use
+"CONCEPT GROUPS" below instead.
+
+--- DEFINITIONS ---
+
 Write one definition entry for every distinct term/topic identified in
-Step 1 — do not limit yourself to only the first topic in the material.
+Step 2 — do not limit yourself to only the first topic in the material.
 
 Each definition entry must contain:
 
@@ -73,9 +109,7 @@ Each definition entry must contain:
   applications, or mini illustrations) — not full worked-out problems
   (those belong in Worked Examples instead).
 
-==================================================
-FORMULAE
-==================================================
+--- FORMULAE ---
 
 Only generate if formulae exist in the material.
 For every formula include:
@@ -84,12 +118,10 @@ For every formula include:
 • formula
 • explanation
 
-==================================================
-WORKED EXAMPLES
-==================================================
+--- WORKED EXAMPLES ---
 
 Generate step-by-step solved examples covering as many of the topics
-identified in Step 1 as possible, so a student can see every major topic
+identified in Step 2 as possible, so a student can see every major topic
 applied at least once. Each worked example must contain:
 
 • title — short name of what is being demonstrated
@@ -109,8 +141,107 @@ characters or LaTeX; the display layer converts ^ into proper
 superscripts automatically.
 
 ==================================================
-DIAGRAMS
+CONCEPT GROUPS  (THEORY-BASED subjects only)
 ==================================================
+
+If you classified the subject as THEORY-BASED in Step 1, generate
+"concept_groups" and leave "definitions", "formulae", and "worked_examples"
+as empty arrays. Do NOT generate a Formulae section for a theory-based
+subject, and do NOT force concepts into a numeric "worked example" format
+— theory subjects should be explained in prose, not as calculations.
+
+Organize the ENTIRE subject into 3 to 8 thematic groups (each becomes its
+own tab in the learning material), based on the natural major divisions of
+the material — e.g. for a "Language Skills" unit this might be "Listening
+Skills", "Reading Skills", "Speaking Skills", "Writing Skills",
+"Interpersonal Skills", "Intrapersonal Skills"; for a Management unit it
+might be "Planning", "Organizing", "Leading", "Controlling". Every topic
+identified in Step 2 must appear in exactly one group.
+
+Each group must contain:
+
+• group_id — a short lowercase, hyphen-free, single-word-style id used
+  internally for the tab (e.g. "listening", "speaking", "planning").
+  Must be unique across all groups in this document.
+• group_title — the human-readable tab name (e.g. "Listening Skills").
+• icon — a single emoji that visually represents the group (e.g. 🎧 for
+  Listening, 📖 for Reading, 🗣️ for Speaking, ✍️ for Writing, 🤝 for
+  Interpersonal, 🧠 for Intrapersonal). Choose one relevant emoji per group.
+• concepts — a list of every distinct concept within that group. Do not
+  skip any concept from the source material; split large topics into
+  multiple concept entries rather than cramming everything into one.
+
+Each concept within a group must contain:
+
+• title — the name of the concept (e.g. "Types of Listening").
+• quick_answer — a short, crisp explanation of the concept in 2-4
+  sentences, suitable for fast revision or a short-answer question.
+• detailed_explanation — a list of objects, each with:
+    - heading — a short sub-heading for that part of the explanation
+      (e.g. "Why it matters", "Types", "1. Deep Listening"), or an empty
+      string "" if that particular paragraph doesn't need one (e.g. an
+      opening paragraph before the sub-headings begin).
+    - text — the explanation for that heading, written as clear,
+      well-structured academic prose (not a bare bullet list dump).
+  Together, the detailed_explanation objects should read like a complete,
+  well-organized long-form answer: an opening paragraph introducing the
+  concept, then sub-headed sections covering its types/components/
+  features/examples/importance as relevant to that concept, and ideally a
+  short concluding paragraph. Base every claim strictly on the source
+  material — do not invent examples, statistics, or sub-types that are not
+  present in or clearly implied by the study material.
+
+Do not add diagrams, formulae, or numeric worked examples inside concept
+groups — those belong only in the quantitative-subject structure above.
+
+==================================================
+IMPORTANT NOTES
+==================================================
+
+Generate important revision points. Avoid repeating definitions.
+
+==================================================
+SUMMARY
+==================================================
+
+Generate a concise revision summary as a list of bullet points (an array
+of strings), not a single paragraph.
+
+==================================================
+PRACTICE PROBLEMS
+==================================================
+
+Generate 5 to 10 short practice items (without full step-by-step
+solutions) covering topics from across the entire material, so a student
+can self-test. Each entry must contain:
+
+• problem — the question/problem statement (for a theory-based subject,
+  this can be a short-answer or discussion-style question rather than a
+  calculation)
+• answer — the final answer only (short), no worked steps
+
+==================================================
+MCQs
+==================================================
+
+Generate multiple choice questions covering topics from across the
+entire material. Each MCQ must contain:
+
+• question
+• option_a
+• option_b
+• option_c
+• option_d
+• correct_answer (the letter A, B, C, or D)
+• explanation
+
+==================================================
+DIAGRAMS  (QUANTITATIVE / TECHNICAL subjects only)
+==================================================
+
+Diagrams are only ever attached to "definitions", "worked_examples", or
+"practice_problems" items — never to "concept_groups" entries, since
+theory-based subjects do not use diagrams.
 
 If a diagram would genuinely help explain a definition, worked example,
 or practice problem, attach an optional "diagram" field to that entry.
@@ -206,45 +337,6 @@ The "diagram" field must be exactly one of the following shapes:
 Only use these exact shapes. Do not add any other diagram "type" value.
 
 ==================================================
-IMPORTANT NOTES
-==================================================
-
-Generate important revision points. Avoid repeating definitions.
-
-==================================================
-SUMMARY
-==================================================
-
-Generate a concise revision summary as a list of bullet points (an array
-of strings), not a single paragraph.
-
-==================================================
-PRACTICE PROBLEMS
-==================================================
-
-Generate 5 to 10 short practice problems (without full step-by-step
-solutions) covering topics from across the entire material, so a student
-can self-test. Each entry must contain:
-
-• problem — the question/problem statement
-• answer — the final answer only (short), no worked steps
-
-==================================================
-MCQs
-==================================================
-
-Generate multiple choice questions covering topics from across the
-entire material. Each MCQ must contain:
-
-• question
-• option_a
-• option_b
-• option_c
-• option_d
-• correct_answer (the letter A, B, C, or D)
-• explanation
-
-==================================================
 OUTPUT FORMAT
 ==================================================
 
@@ -262,6 +354,22 @@ Return ONLY valid JSON, matching this structure exactly:
   "worked_examples": [
     {"title": "", "problem": "", "steps": [], "solution": "", "diagram": null}
   ],
+  "concept_groups": [
+    {
+      "group_id": "",
+      "group_title": "",
+      "icon": "",
+      "concepts": [
+        {
+          "title": "",
+          "quick_answer": "",
+          "detailed_explanation": [
+            {"heading": "", "text": ""}
+          ]
+        }
+      ]
+    }
+  ],
   "important_notes": [],
   "summary": [],
   "practice_problems": [
@@ -277,6 +385,10 @@ Whenever a diagram is actually appropriate for that item (per the
 DIAGRAMS section above), replace null with the real diagram object
 described there. When no diagram is appropriate, you may set it to null
 or omit the key entirely for that item.
+
+Remember: use EITHER (definitions + formulae + worked_examples) OR
+(concept_groups) based on your Step 1 classification — leave the unused
+one as empty arrays. Never populate both structures for the same document.
 
 Do not return markdown.
 Do not return explanations.
