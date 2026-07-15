@@ -25,6 +25,25 @@
       "diagram": null
     }
   ],
+  "concept_groups": [
+    {
+      "group_id": "",
+      "group_title": "",
+      "icon": "",
+      "concepts": [
+        {
+          "title": "",
+          "quick_answer": "",
+          "detailed_explanation": [
+            {
+              "heading": "",
+              "text": ""
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "important_notes": [],
   "summary": [],
   "practice_problems": [
