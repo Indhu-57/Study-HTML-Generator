@@ -35,6 +35,7 @@
           "quick_answer": "",
           "detailed_explanation": [
             {
+              "type": "text",
               "heading": null,
               "text": ""
             }
