@@ -75,9 +75,119 @@ def _initials(text, max_len=3):
     return letters or text[:3].upper()
 
 
+def _render_practice_problems(practice_problems, diagram_fn):
+    """
+    Builds the "Practice Problems" study-section HTML. Shared between the
+    quantitative layout (where it lives inside the Examples tab) and the
+    theory layout (where it lives inside the Study tab, since there is no
+    Examples tab for theory subjects).
+    """
+    if not practice_problems:
+        return ""
+    html = '<div class="study-section"><div class="section-header open" onclick="toggleSection(this)">'
+    html += '<div class="section-icon" style="background:#dbeafe;">\U0001F9E0</div><h2>Practice Problems</h2><span class="toggle">\u25bc</span></div>'
+    html += '<div class="section-body open">'
+    for i, pp in enumerate(practice_problems, start=1):
+        problem = _format_math(pp.get("problem", ""))
+        answer = _format_math(pp.get("answer", ""))
+        diagram_html = diagram_fn(pp.get("diagram"), f"pp{i}")
+        html += f'''
+<div class="practice-card">
+<strong>Problem {i}:</strong> {problem}
+{diagram_html}
+<button onclick="toggleReveal('practice{i}')">Show Answer</button>
+<div id="practice{i}" style="display:none; margin-top:10px;">{answer}</div>
+</div>
+'''
+    html += "</div></div>"
+    return html
+
+
+def _slugify(text, fallback):
+    slug = re.sub(r'[^a-z0-9]+', '-', (text or "").lower()).strip('-')
+    return slug or fallback
+
+
+def _render_concept_groups(concept_groups):
+    """
+    Builds (nav_links_html, pages_html) for theory-subject "concept
+    groups" - one tab per group, each concept showing a quick_answer and
+    a fully structured detailed_explanation (text and quote blocks).
+    Returns ([] , []) if concept_groups is empty.
+    """
+    if not concept_groups:
+        return [], []
+
+    nav_links = []
+    pages = []
+
+    for gi, group in enumerate(concept_groups):
+        title = group.get("group_title") or f"Topic {gi + 1}"
+        tab_id = _slugify(title, f"concept{gi}")
+        nav_links.append(f'    <a onclick="showPage(\'{tab_id}\', this)">{_format_math(title)}</a>')
+
+        concept_blocks = []
+        for concept in group.get("concepts", []):
+            c_title = _format_math(concept.get("title", ""))
+            quick_answer = _format_math(concept.get("quick_answer", ""))
+
+            detail_html = ""
+            for block in concept.get("detailed_explanation", []):
+                if not isinstance(block, dict):
+                    continue
+                block_type = (block.get("type") or "text").strip().lower()
+                heading = block.get("heading")
+                text = block.get("text", "")
+
+                if block_type == "quote":
+                    lines = [ln for ln in (text or "").split("\n") if ln.strip()]
+                    quote_lines_html = "".join(f"<p>{_format_math(ln.strip())}</p>" for ln in lines)
+                    heading_html = f'<div class="ae-quote-heading">{_format_math(heading)}</div>' if heading else ""
+                    detail_html += f'<div class="ae-quote">{heading_html}<div class="ae-quote-lines">{quote_lines_html}</div></div>'
+                else:
+                    if heading:
+                        detail_html += f'<p class="ae-subhead">{_format_math(heading)}</p>'
+                    if text:
+                        detail_html += f'<p class="ae-text">{_format_math(text)}</p>'
+
+            concept_blocks.append(f'''
+<div class="concept-block">
+<div class="concept-title">{c_title}</div>
+<div class="answer-box quick">
+<div class="answer-label">Quick Answer</div>
+<p>{quick_answer}</p>
+</div>
+<div class="answer-box detailed">
+<div class="answer-label">Detailed Explanation</div>
+{detail_html}
+</div>
+</div>''')
+
+        page_html = f'''
+<div id="page-{tab_id}" class="page">
+<div class="container">
+<div class="concept-tab-intro">
+<h2>{_format_math(title)}</h2>
+<p>Clear, well-structured explanations for every concept in this topic \u2014 a quick answer for fast revision, and a fully developed explanation for deeper understanding.</p>
+</div>
+{"".join(concept_blocks)}
+</div>
+</div>'''
+        pages.append(page_html)
+
+    return nav_links, pages
+
+
 def generate_html(data):
     css = Path("assets/style.css").read_text(encoding="utf-8")
     js = Path("assets/script.js").read_text(encoding="utf-8")
+
+    subject_type = (data.get("subject_type") or "").strip().lower()
+    concept_groups = data.get("concept_groups") or []
+    # Trust concept_groups actually being populated over the subject_type
+    # label alone, in case Gemini sets the label inconsistently with the
+    # content it actually produced.
+    is_theory = bool(concept_groups) and subject_type != "quantitative"
 
     # Chart.js needs its configs registered as JS + a <canvas> placeholder;
     # collect them here as we walk the data, then inject once at the end.
@@ -89,7 +199,7 @@ def generate_html(data):
         - venn2/venn3  -> inline static SVG (no JS needed)
         - bar/line/pie/function_graph -> a <canvas> placeholder + a
           registered Chart.js config, instantiated by script.js on load.
-        Returns HTML (possibly empty string) — never raises.
+        Returns HTML (possibly empty string) - never raises.
         """
         if not isinstance(spec, dict):
             return ""
@@ -120,8 +230,9 @@ def generate_html(data):
     badge_text = _initials(subject)
 
     # -----------------------------------------------------
-    # STUDY TAB — Introduction, Notes, Summary, Flashcards only
-    # (Definitions, Formulae, and Worked Examples now have their own tabs)
+    # STUDY TAB - Introduction, Notes, Summary, Flashcards
+    # (Practice Problems are appended here too for theory subjects,
+    # since they have no Examples tab to live in.)
     # -----------------------------------------------------
     study_sections = []
 
@@ -129,20 +240,20 @@ def generate_html(data):
     if data.get("introduction"):
         intro_body += f'<p style="margin-bottom:16px;">{_format_math(data.get("introduction",""))}</p>'
     if data.get("learning_outcomes"):
-        intro_body += '<p style="font-weight:700;color:var(--navy);margin-bottom:8px;">🎯 Learning Outcomes</p>'
+        intro_body += '<p style="font-weight:700;color:var(--navy);margin-bottom:8px;">\U0001F3AF Learning Outcomes</p>'
         intro_body += '<ul class="key-points">'
         for item in data.get("learning_outcomes", []):
             intro_body += f"<li>{_format_math(item)}</li>"
         intro_body += "</ul>"
     if intro_body:
-        study_sections.append(("📖", "Introduction & Learning Outcomes", intro_body, True))
+        study_sections.append(("\U0001F4D6", "Introduction & Learning Outcomes", intro_body, True))
 
     if data.get("important_notes"):
         body = '<ul class="key-points">'
         for note in data.get("important_notes", []):
             body += f"<li>{_format_math(note)}</li>"
         body += "</ul>"
-        study_sections.append(("💡", "Important Notes", body, True))
+        study_sections.append(("\U0001F4A1", "Important Notes", body, True))
 
     if data.get("summary"):
         summary_val = data.get("summary")
@@ -153,7 +264,7 @@ def generate_html(data):
         else:
             body += f"<li>{_format_math(summary_val)}</li>"
         body += "</ul>"
-        study_sections.append(("📄", "Summary", body, False))
+        study_sections.append(("\U0001F4C4", "Summary", body, False))
 
     study_icons_bg = ["#dbeafe", "#dcfce7", "#fef3c7", "#fee2e2", "#ede9fe", "#fce7f3"]
     study_html = ""
@@ -165,27 +276,37 @@ def generate_html(data):
 <div class="study-section">
 <div class="section-header{open_header}" onclick="toggleSection(this)">
 <div class="section-icon" style="background:{bg};">{icon}</div>
-<h2>{sec_title}</h2><span class="toggle">▼</span>
+<h2>{sec_title}</h2><span class="toggle">\u25bc</span>
 </div>
 <div class="section-body{open_body}">{body}</div>
 </div>
 '''
 
+    if is_theory:
+        study_html += _render_practice_problems(data.get("practice_problems"), _diagram_html)
+
     # -----------------------------------------------------
-    # DEFINITIONS TAB — term, meaning, and 3-10 examples each
+    # CONCEPT GROUP TABS (theory subjects only)
+    # -----------------------------------------------------
+    concept_nav_links, concept_pages_html = _render_concept_groups(concept_groups) if is_theory else ([], [])
+
+    # -----------------------------------------------------
+    # DEFINITIONS TAB - term, meaning, and 3-10 examples each
+    # (quantitative subjects only)
     # -----------------------------------------------------
     definitions_html = ""
-    if data.get("definitions"):
-        for idx, d in enumerate(data.get("definitions", [])):
-            examples = d.get("examples", [])
-            examples_html = ""
-            if examples:
-                examples_html = '<div class="def-examples"><strong>Examples:</strong><ul class="key-points">'
-                for ex in examples:
-                    examples_html += f"<li>{_format_math(ex)}</li>"
-                examples_html += "</ul></div>"
-            diagram_html = _diagram_html(d.get("diagram"), f"def{idx}")
-            definitions_html += f'''
+    if not is_theory:
+        if data.get("definitions"):
+            for idx, d in enumerate(data.get("definitions", [])):
+                examples = d.get("examples", [])
+                examples_html = ""
+                if examples:
+                    examples_html = '<div class="def-examples"><strong>Examples:</strong><ul class="key-points">'
+                    for ex in examples:
+                        examples_html += f"<li>{_format_math(ex)}</li>"
+                    examples_html += "</ul></div>"
+                diagram_html = _diagram_html(d.get("diagram"), f"def{idx}")
+                definitions_html += f'''
 <div class="def-box">
 <div class="def-title">{d.get("term","")}</div>
 <p>{_format_math(d.get("meaning",""))}</p>
@@ -193,27 +314,28 @@ def generate_html(data):
 {examples_html}
 </div>
 '''
-    else:
-        definitions_html = '<p style="text-align:center;color:var(--muted);">No definitions for this topic.</p>'
+        else:
+            definitions_html = '<p style="text-align:center;color:var(--muted);">No definitions for this topic.</p>'
 
     # -----------------------------------------------------
-    # WORKED EXAMPLES TAB
+    # WORKED EXAMPLES TAB (quantitative subjects only)
     # -----------------------------------------------------
     examples_page_html = ""
-    if data.get("worked_examples"):
-        for i, ex in enumerate(data.get("worked_examples", []), start=1):
-            title, problem, steps, final_answer = _normalize_worked_example(ex)
-            steps_html = ""
-            for step in steps:
-                cleaned = _clean_step(step)
-                if cleaned:
-                    steps_html += f'<p class="step-line">{cleaned}</p>'
-            heading = _format_math(title) if title else "Worked Example"
-            if problem:
-                heading += f" — {_format_math(problem)}"
-            final_html = f'<div class="step-answer">Answer: {_format_math(final_answer)}</div>' if final_answer else ""
-            diagram_html = _diagram_html(ex.get("diagram"), f"we{i}")
-            examples_page_html += f'''
+    if not is_theory:
+        if data.get("worked_examples"):
+            for i, ex in enumerate(data.get("worked_examples", []), start=1):
+                title, problem, steps, final_answer = _normalize_worked_example(ex)
+                steps_html = ""
+                for step in steps:
+                    cleaned = _clean_step(step)
+                    if cleaned:
+                        steps_html += f'<p class="step-line">{cleaned}</p>'
+                heading = _format_math(title) if title else "Worked Example"
+                if problem:
+                    heading += f" \u2014 {_format_math(problem)}"
+                final_html = f'<div class="step-answer">Answer: {_format_math(final_answer)}</div>' if final_answer else ""
+                diagram_html = _diagram_html(ex.get("diagram"), f"we{i}")
+                examples_page_html += f'''
 <div class="worked-example">
 <div class="we-q">{heading}</div>
 {diagram_html}
@@ -221,49 +343,35 @@ def generate_html(data):
 {final_html}
 </div>
 '''
-    else:
-        examples_page_html = '<p style="text-align:center;color:var(--muted);">No worked examples for this topic.</p>'
+        else:
+            examples_page_html = '<p style="text-align:center;color:var(--muted);">No worked examples for this topic.</p>'
 
-    if data.get("practice_problems"):
-        examples_page_html += '<div class="study-section"><div class="section-header open" onclick="toggleSection(this)">'
-        examples_page_html += '<div class="section-icon" style="background:#dbeafe;">🧠</div><h2>Practice Problems</h2><span class="toggle">▼</span></div>'
-        examples_page_html += '<div class="section-body open">'
-        for i, pp in enumerate(data.get("practice_problems", []), start=1):
-            problem = _format_math(pp.get("problem", ""))
-            answer = _format_math(pp.get("answer", ""))
-            diagram_html = _diagram_html(pp.get("diagram"), f"pp{i}")
-            examples_page_html += f'''
-<div class="practice-card">
-<strong>Problem {i}:</strong> {problem}
-{diagram_html}
-<button onclick="toggleReveal('practice{i}')">Show Answer</button>
-<div id="practice{i}" style="display:none; margin-top:10px;">{answer}</div>
-</div>
-'''
-        examples_page_html += "</div></div>"
+        examples_page_html += _render_practice_problems(data.get("practice_problems"), _diagram_html)
 
     # -----------------------------------------------------
-    # FORMULAS PAGE — dedicated tab, formula grid only
+    # FORMULAS PAGE - dedicated tab, formula grid only
+    # (quantitative subjects only)
     # -----------------------------------------------------
     formulas_page_html = ""
-    if data.get("formulae"):
-        formulas_page_html += '<div class="study-section"><div class="section-header open" onclick="toggleSection(this)">'
-        formulas_page_html += '<div class="section-icon" style="background:#dbeafe;">📋</div><h2>All Formulae</h2><span class="toggle">▼</span></div>'
-        formulas_page_html += '<div class="section-body open"><div class="formula-grid">'
-        for f in data.get("formulae", []):
-            formulas_page_html += f'''
+    if not is_theory:
+        if data.get("formulae"):
+            formulas_page_html += '<div class="study-section"><div class="section-header open" onclick="toggleSection(this)">'
+            formulas_page_html += '<div class="section-icon" style="background:#dbeafe;">\U0001F4CB</div><h2>All Formulae</h2><span class="toggle">\u25bc</span></div>'
+            formulas_page_html += '<div class="section-body open"><div class="formula-grid">'
+            for f in data.get("formulae", []):
+                formulas_page_html += f'''
 <div class="formula-card">
 <div class="f-label">{_format_math(f.get("formula_name",""))}</div>
 <div class="f-eq">{_format_math(f.get("formula",""))}</div>
 <div class="f-desc">{_format_math(f.get("explanation",""))}</div>
 </div>
 '''
-        formulas_page_html += "</div></div></div>"
-    else:
-        formulas_page_html = '<p style="text-align:center;color:var(--muted);">No formulae for this topic.</p>'
+            formulas_page_html += "</div></div></div>"
+        else:
+            formulas_page_html = '<p style="text-align:center;color:var(--muted);">No formulae for this topic.</p>'
 
     # -----------------------------------------------------
-    # MCQ DATA — passed to JS as JSON, single quiz, no tiers
+    # MCQ DATA - passed to JS as JSON, single quiz, no tiers
     # -----------------------------------------------------
     quiz_data = []
     for mcq in data.get("mcqs", []):
@@ -300,6 +408,39 @@ def generate_html(data):
 '''
 
     # -----------------------------------------------------
+    # NAV LINKS + PAGE SECTIONS
+    # (differ depending on subject_type)
+    # -----------------------------------------------------
+    if is_theory:
+        nav_extra = "\n".join(concept_nav_links)
+        pages_extra = "\n".join(concept_pages_html)
+    else:
+        nav_extra = (
+            '    <a onclick="showPage(\'definitions\', this)">\U0001F4DA Definitions</a>\n'
+            '    <a onclick="showPage(\'formulas\', this)">\u2797 Formulas</a>\n'
+            '    <a onclick="showPage(\'examples\', this)">\u270F\uFE0F Examples</a>'
+        )
+        pages_extra = f'''
+<div id="page-definitions" class="page">
+<div class="container">
+{definitions_html}
+</div>
+</div>
+
+<div id="page-formulas" class="page">
+<div class="container">
+{formulas_page_html}
+</div>
+</div>
+
+<div id="page-examples" class="page">
+<div class="container">
+{examples_page_html}
+</div>
+</div>
+'''
+
+    # -----------------------------------------------------
     # ASSEMBLE FULL PAGE
     # -----------------------------------------------------
     html = f"""
@@ -324,11 +465,9 @@ def generate_html(data):
     </div>
   </div>
   <div class="nav-links">
-    <a class="active" onclick="showPage('study', this)">📖 Study</a>
-    <a onclick="showPage('definitions', this)">📚 Definitions</a>
-    <a onclick="showPage('formulas', this)">➗ Formulas</a>
-    <a onclick="showPage('examples', this)">✏️ Examples</a>
-    <a onclick="showPage('mcq', this)">✅ MCQ Test</a>
+    <a class="active" onclick="showPage('study', this)">\U0001F4D6 Study</a>
+{nav_extra}
+    <a onclick="showPage('mcq', this)">\u2705 MCQ Test</a>
   </div>
 </nav>
 
@@ -339,7 +478,7 @@ def generate_html(data):
       <div class="inst-details">
         <span class="inst-label">Course Instructor</span>
         <span class="inst-name">{instructor}</span>
-        <span class="inst-role">{department} &nbsp;·&nbsp; {programme}</span>
+        <span class="inst-role">{department} &nbsp;\u00b7&nbsp; {programme}</span>
       </div>
     </div>
   </div>
@@ -352,38 +491,22 @@ def generate_html(data):
 <div>
 <button class="btn btn-secondary btn-sm" onclick="expandAllSections()">Expand All</button>
 <button class="btn btn-secondary btn-sm" onclick="collapseAllSections()">Collapse All</button>
-<button class="btn btn-secondary btn-sm" onclick="printPage()">🖨 Print</button>
+<button class="btn btn-secondary btn-sm" onclick="printPage()">\U0001F5A8 Print</button>
 </div>
 </div>
 {study_html}
 </div>
 </div>
 
-<div id="page-definitions" class="page">
-<div class="container">
-{definitions_html}
-</div>
-</div>
-
-<div id="page-formulas" class="page">
-<div class="container">
-{formulas_page_html}
-</div>
-</div>
-
-<div id="page-examples" class="page">
-<div class="container">
-{examples_page_html}
-</div>
-</div>
+{pages_extra}
 
 <div id="page-mcq" class="page">
 <div class="container">
 
 <div class="mcq-intro" id="mcq-intro">
-<h2>✏️ MCQ Test</h2>
+<h2>\u270F\uFE0F MCQ Test</h2>
 <p>Test your understanding of {topic} and see your score at the end.</p>
-<button class="btn btn-primary" onclick="startQuiz()">🚀 Start Quiz</button>
+<button class="btn btn-primary" onclick="startQuiz()">\U0001F680 Start Quiz</button>
 </div>
 
 <div class="quiz-container" id="quiz-container">
@@ -402,14 +525,14 @@ def generate_html(data):
 
 <div class="results-panel" id="results-panel">
 <div class="score-ring"><span id="score-pct">0%</span><span class="score-label">Score</span></div>
-<h3 id="results-title">Great Job! 🎉</h3>
+<h3 id="results-title">Great Job! \U0001F389</h3>
 <p id="results-msg"></p>
 <div class="result-stats">
 <div class="result-stat rs-correct"><div class="rs-num" id="rs-correct">0</div><div class="rs-lbl">Correct</div></div>
 <div class="result-stat rs-wrong"><div class="rs-num" id="rs-wrong">0</div><div class="rs-lbl">Wrong</div></div>
 <div class="result-stat rs-score"><div class="rs-num" id="rs-score">0%</div><div class="rs-lbl">Score</div></div>
 </div>
-<button class="btn btn-secondary" onclick="retakeQuiz()">🔄 Retake Quiz</button>
+<button class="btn btn-secondary" onclick="retakeQuiz()">\U0001F504 Retake Quiz</button>
 <div id="review-area" style="text-align:left;margin-top:10px;"></div>
 </div>
 
