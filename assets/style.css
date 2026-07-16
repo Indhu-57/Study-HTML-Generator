@@ -95,18 +95,40 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 /* KEY POINTS */
 .key-points{list-style:none;}
 .key-points li{padding:7px 0;border-bottom:1px solid #f1f5f9;padding-left:22px;position:relative;font-size:.91rem;}
-.key-points li::before{content:'▶';position:absolute;left:0;color:var(--sky);font-size:.6rem;top:11px;}
+.key-points li::before{content:'\25b6';position:absolute;left:0;color:var(--sky);font-size:.6rem;top:11px;}
 .key-points li:last-child{border-bottom:none;}
 
 /* SUMMARY */
 .summary-list{list-style:none;}
 .summary-list li{padding:8px 0;border-bottom:1px solid #f1f5f9;padding-left:22px;position:relative;font-size:.91rem;}
-.summary-list li::before{content:'✓';position:absolute;left:0;color:var(--accent2);font-weight:700;top:8px;}
+.summary-list li::before{content:'\2713';position:absolute;left:0;color:var(--accent2);font-weight:700;top:8px;}
 .summary-list li:last-child{border-bottom:none;}
 
 /* FLASHCARDS */
 .flashcard{background:#fff8e1;border:1px solid #fde68a;border-left:5px solid var(--accent);padding:15px 18px;margin-bottom:14px;border-radius:0 10px 10px 0;}
 .flashcard button{margin-top:8px;}
+
+/* CONCEPT TABS (theory-subject quick answer / detailed explanation) */
+.concept-tab-intro{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:24px 28px;margin-bottom:22px;box-shadow:0 2px 10px rgba(0,0,0,.05);}
+.concept-tab-intro h2{font-family:'Merriweather',serif;font-size:1.3rem;color:var(--navy);margin-bottom:6px;}
+.concept-tab-intro p{color:var(--muted);font-size:.88rem;}
+.concept-block{background:var(--card);border-radius:16px;border:1px solid var(--border);margin-bottom:22px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);}
+.concept-block .concept-title{background:linear-gradient(90deg,var(--navy),var(--blue));color:#fff;font-family:'Merriweather',serif;font-weight:700;font-size:1.02rem;padding:16px 22px;}
+.answer-box{padding:16px 22px;}
+.answer-box .answer-label{display:inline-block;font-size:.66rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 11px;border-radius:10px;margin-bottom:10px;}
+.answer-box.quick{background:#f0f6ff;border-bottom:1px solid var(--border);}
+.answer-box.quick .answer-label{background:var(--sky);color:#fff;}
+.answer-box.quick p{font-size:.92rem;color:var(--text);line-height:1.65;}
+.answer-box.detailed{background:#fdfefe;}
+.answer-box.detailed .answer-label{background:var(--accent2);color:#fff;}
+.answer-box.detailed .ae-subhead{font-weight:700;color:var(--navy);font-size:.9rem;margin:12px 0 4px;}
+.answer-box.detailed .ae-subhead:first-of-type{margin-top:2px;}
+.answer-box.detailed .ae-text{font-size:.9rem;color:var(--text);line-height:1.7;margin-bottom:2px;}
+/* Poetic / verse quotation blocks: kept visually separate from the
+   surrounding explanation, with each original line on its own row. */
+.answer-box.detailed .ae-quote{background:#f8f5ee;border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 18px;margin:12px 0;}
+.answer-box.detailed .ae-quote-heading{font-weight:700;color:#92400e;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.answer-box.detailed .ae-quote-lines p{font-family:'Merriweather',serif;font-style:italic;color:#4b3f2a;font-size:.92rem;line-height:1.85;margin:0;}
 
 /* MCQ INTRO */
 .mcq-intro{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:40px;text-align:center;margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.05);}
