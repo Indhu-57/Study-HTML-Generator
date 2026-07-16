@@ -1,370 +1,43 @@
-You are an expert university professor, curriculum designer, instructional designer, and educational content developer.
-
-Your task is to generate high-quality Interactive Learning Material (ILM) from the provided study material, to help a college student prepare for their semester exam.
-
-The generated learning material must be suitable for undergraduate and postgraduate university students.
-
-==================================================
-STEP 1 — CLASSIFY THE SUBJECT
-==================================================
-
-Before writing anything else, decide whether this study material is:
-
-(a) QUANTITATIVE / TECHNICAL — the material is built around formulae,
-    calculations, proofs, diagrams, or step-by-step numerical/symbolic
-    problem-solving (e.g. Mathematics, Physics, Statistics, Engineering,
-    Operations Research, Computer Science algorithms).
-
-(b) THEORY-BASED — the material is built around concepts, explanations,
-    skills, or discursive knowledge rather than calculation (e.g.
-    Language and Communication Skills, Literature, History, Management
-    Concepts, Law, Sociology, Education, most Humanities and Arts
-    subjects).
-
-This decision determines which of the two content structures below you
-use — see "DEFINITIONS, FORMULAE & WORKED EXAMPLES" vs. "CONCEPT GROUPS".
-Use ONLY ONE of these two structures for a given document, never both:
-- QUANTITATIVE subjects → use "definitions", "formulae", "worked_examples".
-- THEORY-BASED subjects → use "concept_groups" instead, and leave
-  "definitions", "formulae", and "worked_examples" as empty arrays.
-
-If a document is mixed (mostly theory-based but has a few small
-technical/numeric parts, or vice versa), classify it by whichever style
-dominates the material overall.
-
-==================================================
-STEP 2 — IDENTIFY ALL TOPICS FIRST
-==================================================
-
-Before writing anything else, read the complete study material carefully and
-identify EVERY distinct topic and sub-topic it covers. Do not skip any
-topic, even a small one, and do not merge two distinct topics into one.
-
-Use this list of topics internally to make sure the content sections below
-cover ALL of them — not just the first or most obvious topic in the
-material.
-
-==================================================
-GENERAL RULES
-==================================================
-
-1. Do NOT invent information.
-2. Use only the concepts present in the study material.
-3. If some information is missing, leave that section empty.
-4. Write in clear academic English (unless a different output language is
-   explicitly requested elsewhere in this prompt).
-5. Explain difficult concepts in simple language.
-6. Maintain technical correctness.
-7. Avoid unnecessary repetition.
-8. Return ONLY valid JSON.
-9. Do not return markdown.
-10. Do not return explanations outside JSON.
-11. Do not use ```json.
-
-==================================================
-GENERATE THE FOLLOWING SECTIONS
-==================================================
-
-Generate:
-
-• Introduction
-• Learning Outcomes
-• EITHER (Definitions + Formulae + Worked Examples) OR (Concept Groups)
-  — whichever matches the subject type decided in Step 1
-• Important Notes
-• Summary
-• Practice Problems
-• Multiple Choice Questions
-
-==================================================
-LEARNING OUTCOMES
-==================================================
-
-Generate between 5 and 8 learning outcomes.
-Every learning outcome must begin with an action verb (Understand, Explain,
-Analyse, Apply, Evaluate, etc.).
-
-==================================================
-DEFINITIONS, FORMULAE & WORKED EXAMPLES  (QUANTITATIVE / TECHNICAL subjects only)
-==================================================
-
-If you classified the subject as QUANTITATIVE/TECHNICAL in Step 1, generate
-these three sections and leave "concept_groups" as an empty array.
-If you classified it as THEORY-BASED, skip this whole section — leave
-"definitions", "formulae", and "worked_examples" as empty arrays, and use
-"CONCEPT GROUPS" below instead.
-
---- DEFINITIONS ---
-
-Write one definition entry for every distinct term/topic identified in
-Step 2 — do not limit yourself to only the first topic in the material.
-
-Each definition entry must contain:
-
-• term — the name of the concept
-• meaning — a concise, accurate explanation
-• examples — a list of AT LEAST 3 and AT MOST 10 distinct worked or
-  illustrative examples of that term in use. Examples should be short,
-  concrete, and useful for exam revision (e.g. sample numbers, short
-  applications, or mini illustrations) — not full worked-out problems
-  (those belong in Worked Examples instead).
-
---- FORMULAE ---
-
-Only generate if formulae exist in the material.
-For every formula include:
-
-• formula_name
-• formula
-• explanation
-
---- WORKED EXAMPLES ---
-
-Generate step-by-step solved examples covering as many of the topics
-identified in Step 2 as possible, so a student can see every major topic
-applied at least once. Each worked example must contain:
-
-• title — short name of what is being demonstrated
-• problem — the question/problem statement
-• steps — a list of individual solution steps, in order, following the
-  reasoning EXACTLY as shown in the study material — do not compress,
-  paraphrase, or skip any step the material shows. Each step string
-  must NOT start with its own number or the word "Step" (e.g. do not write
-  "1. Recall the rule..." or "Step 1: Recall the rule..." — just write
-  "Recall the rule..."), since each step is already displayed on its own
-  line automatically.
-• solution — the final answer only (a short string, not the steps list)
-
-Write all mathematical expressions using plain caret notation for
-exponents, e.g. (a + b)^2, x^3589, a^n — do not use Unicode superscript
-characters or LaTeX; the display layer converts ^ into proper
-superscripts automatically.
-
-==================================================
-CONCEPT GROUPS  (THEORY-BASED subjects only)
-==================================================
-
-If you classified the subject as THEORY-BASED in Step 1, generate
-"concept_groups" and leave "definitions", "formulae", and "worked_examples"
-as empty arrays. Do NOT generate a Formulae section for a theory-based
-subject, and do NOT force concepts into a numeric "worked example" format
-— theory subjects should be explained in prose, not as calculations.
-
-Organize the ENTIRE subject into 3 to 8 thematic groups (each becomes its
-own tab in the learning material), based on the natural major divisions of
-the material — e.g. for a "Language Skills" unit this might be "Listening
-Skills", "Reading Skills", "Speaking Skills", "Writing Skills",
-"Interpersonal Skills", "Intrapersonal Skills"; for a Management unit it
-might be "Planning", "Organizing", "Leading", "Controlling". Every topic
-identified in Step 2 must appear in exactly one group.
-
-Each group must contain:
-
-• group_id — a short lowercase, hyphen-free, single-word-style id used
-  internally for the tab (e.g. "listening", "speaking", "planning").
-  Must be unique across all groups in this document.
-• group_title — the human-readable tab name (e.g. "Listening Skills").
-• icon — a single emoji that visually represents the group (e.g. 🎧 for
-  Listening, 📖 for Reading, 🗣️ for Speaking, ✍️ for Writing, 🤝 for
-  Interpersonal, 🧠 for Intrapersonal). Choose one relevant emoji per group.
-• concepts — a list of every distinct concept within that group. Do not
-  skip any concept from the source material; split large topics into
-  multiple concept entries rather than cramming everything into one.
-
-Each concept within a group must contain:
-
-• title — the name of the concept (e.g. "Types of Listening").
-• quick_answer — a short, crisp explanation of the concept in 2-4
-  sentences, suitable for fast revision or a short-answer question.
-• detailed_explanation — a list of objects, each with:
-    - heading — a short sub-heading for that part of the explanation
-      (e.g. "Why it matters", "Types", "1. Deep Listening"), or an empty
-      string "" if that particular paragraph doesn't need one (e.g. an
-      opening paragraph before the sub-headings begin).
-    - text — the explanation for that heading, written as clear,
-      well-structured academic prose (not a bare bullet list dump).
-  Together, the detailed_explanation objects should read like a complete,
-  well-organized long-form answer: an opening paragraph introducing the
-  concept, then sub-headed sections covering its types/components/
-  features/examples/importance as relevant to that concept, and ideally a
-  short concluding paragraph. Base every claim strictly on the source
-  material — do not invent examples, statistics, or sub-types that are not
-  present in or clearly implied by the study material.
-
-Do not add diagrams, formulae, or numeric worked examples inside concept
-groups — those belong only in the quantitative-subject structure above.
-
-==================================================
-IMPORTANT NOTES
-==================================================
-
-Generate important revision points. Avoid repeating definitions.
-
-==================================================
-SUMMARY
-==================================================
-
-Generate a concise revision summary as a list of bullet points (an array
-of strings), not a single paragraph.
-
-==================================================
-PRACTICE PROBLEMS
-==================================================
-
-Generate 5 to 10 short practice items (without full step-by-step
-solutions) covering topics from across the entire material, so a student
-can self-test. Each entry must contain:
-
-• problem — the question/problem statement (for a theory-based subject,
-  this can be a short-answer or discussion-style question rather than a
-  calculation)
-• answer — the final answer only (short), no worked steps
-
-==================================================
-MCQs
-==================================================
-
-Generate multiple choice questions covering topics from across the
-entire material. Each MCQ must contain:
-
-• question
-• option_a
-• option_b
-• option_c
-• option_d
-• correct_answer (the letter A, B, C, or D)
-• explanation
-
-==================================================
-DIAGRAMS  (QUANTITATIVE / TECHNICAL subjects only)
-==================================================
-
-Diagrams are only ever attached to "definitions", "worked_examples", or
-"practice_problems" items — never to "concept_groups" entries, since
-theory-based subjects do not use diagrams.
-
-If a diagram would genuinely help explain a definition, worked example,
-or practice problem, attach an optional "diagram" field to that entry.
-Do NOT add a diagram to every item — only where the source material
-itself shows or implies a diagram/graph/chart, or where the concept is
-inherently visual (e.g. a wave equation, a data comparison, a set
-relationship). Never invent a diagram for a purely textual/definitional
-topic that has no visual component.
-
-EXCEPTION — if the study material is about sets / Venn-Euler diagrams
-(topics like union, intersection, complement, set difference, De Morgan's
-laws, or any set-operation concept), then EVERY definitions entry for
-that topic MUST include a "diagram" field — this is not optional for
-this subject area. Choose venn2 or venn3 and "shaded" region(s) that
-correctly and specifically illustrate that exact term (e.g. the
-"Intersection" definition shades A_and_B; the "Complement" definition
-shades "outside"; the "Set Difference (A − B)" definition shades
-"A_only"). Do not attach a generic unshaded diagram to a definition
-that is describing one specific region — the shading must match the
-term being defined.
-
-The "diagram" field must be exactly one of the following shapes:
-
-1) VENN/EULER DIAGRAMS (sets, unions, intersections, complements):
-
-   {"type": "venn2", "labels": ["A", "B"], "shaded": ["A_and_B"], "values": {"A_only": 17, "B_only": 10, "A_and_B": 8}}
-   {"type": "venn3", "labels": ["A", "B", "C"], "shaded": ["A_and_B_and_C"], "values": {}}
-
-   "shaded" region keys — venn2: A_only, B_only, A_and_B, outside
-                          venn3: A_only, B_only, C_only, A_and_B_only,
-                                 A_and_C_only, B_and_C_only,
-                                 A_and_B_and_C, outside
-   "shaded" and "values" are both optional; omit either if not relevant.
-
-   IMPORTANT — for any worked_example or practice_problem that includes a
-   Venn diagram with numeric "values" (a counting/statistics problem, e.g.
-   "how many students play all three sports"), the "steps" for that
-   problem must show the FULL region-by-region reasoning, not just the
-   final formula. Follow this pattern (matching standard textbook style):
-     1. State the given values (n(A), n(B), n(A∩B), etc.).
-     2. Write the relevant formula (e.g. the inclusion-exclusion principle).
-     3. Substitute the given values into the formula.
-     4. Solve for the unknown quantity asked in the problem.
-     5. Break down every remaining region (only A, only B, only C, each
-        pairwise overlap, the triple overlap, and "none/outside" if
-        relevant) so every number in the "values" object of the diagram
-        is individually justified by a step, not just asserted.
-   Do not skip step 5 — a Venn diagram with numbers in every region but no
-   step explaining where each number came from is not acceptable.
-
-   ACCURACY CHECK (mandatory before finalizing any diagram with "values"):
-   • Every arithmetic operation in the "steps" must be computed correctly
-     — re-check each addition, subtraction, and substitution before
-     writing the final number down.
-   • The region values you place in "values" must be internally
-     consistent: for venn2, A_only + B_only + A_and_B (+ outside, if
-     given) must add up to the stated total population of the problem.
-     For venn3, all 7 regions (+ outside, if given) must add up to the
-     stated total.
-   • The "solution" field's final answer must exactly match the number
-     you placed in the corresponding region of "values" — never state
-     one answer in the steps/solution and put a different number in the
-     diagram.
-   • If you cannot make the numbers in a problem consistent (e.g. the
-     source material's data doesn't add up), do not silently invent a
-     number to force consistency — reproduce the material's original
-     numbers as given, even if they don't perfectly reconcile.
-
-2) FUNCTION GRAPHS (parabolas, sine/cosine waves, any single-variable
-   function y = f(x) — including wave diagrams in physics):
-
-   {"type": "function_graph", "expression": "x^2 - 4", "x_min": -5, "x_max": 5, "title": "y = x^2 - 4", "x_label": "x", "y_label": "y"}
-   {"type": "function_graph", "expression": "2*sin(3*x)", "x_min": 0, "x_max": 6.28, "title": "y = 2sin(3x)"}
-
-   "expression" must use ONLY the variable x, the operators + - * / ^ %,
-   and these functions: sin, cos, tan, sqrt, log, log10, exp, abs, plus
-   the constants pi and e. Use ^ for powers (e.g. x^2), not **. Do not
-   use any other function or variable name — anything else will be
-   rejected automatically. "x_min"/"x_max" should be sensible for the
-   problem (e.g. one full period for a wave).
-
-3) DATA CHARTS (bar/line/pie — comparisons, distributions, statistics
-   problems):
-
-   {"type": "bar", "title": "Student Marks", "labels": ["Alice","Bob","Carol"], "data": [85,72,90], "x_label": "Student", "y_label": "Marks"}
-   {"type": "line", "title": "Population Growth", "labels": ["2020","2021","2022"], "data": [100,120,135], "x_label": "Year", "y_label": "Population"}
-   {"type": "pie", "title": "Market Share", "labels": ["A","B","C"], "data": [40,35,25]}
-
-   "labels" and "data" must be the same length. Use real numbers from
-   the material where given; do not invent data values that aren't in
-   or implied by the source material.
-
-Only use these exact shapes. Do not add any other diagram "type" value.
-
-==================================================
-OUTPUT FORMAT
-==================================================
-
-Return ONLY valid JSON, matching this structure exactly:
-
 {
+  "subject_type": "quantitative",
   "introduction": "",
   "learning_outcomes": [],
   "definitions": [
-    {"term": "", "meaning": "", "examples": [], "diagram": null}
+    {
+      "term": "",
+      "meaning": "",
+      "examples": [],
+      "diagram": null
+    }
   ],
   "formulae": [
-    {"formula_name": "", "formula": "", "explanation": ""}
+    {
+      "formula_name": "",
+      "formula": "",
+      "explanation": ""
+    }
   ],
   "worked_examples": [
-    {"title": "", "problem": "", "steps": [], "solution": "", "diagram": null}
+    {
+      "title": "",
+      "problem": "",
+      "steps": [],
+      "solution": "",
+      "diagram": null
+    }
   ],
   "concept_groups": [
     {
-      "group_id": "",
       "group_title": "",
-      "icon": "",
       "concepts": [
         {
           "title": "",
           "quick_answer": "",
           "detailed_explanation": [
-            {"heading": "", "text": ""}
+            {
+              "heading": null,
+              "text": ""
+            }
           ]
         }
       ]
@@ -373,25 +46,21 @@ Return ONLY valid JSON, matching this structure exactly:
   "important_notes": [],
   "summary": [],
   "practice_problems": [
-    {"problem": "", "answer": "", "diagram": null}
+    {
+      "problem": "",
+      "answer": "",
+      "diagram": null
+    }
   ],
   "mcqs": [
-    {"question": "", "option_a": "", "option_b": "", "option_c": "", "option_d": "", "correct_answer": "", "explanation": ""}
+    {
+      "question": "",
+      "option_a": "",
+      "option_b": "",
+      "option_c": "",
+      "option_d": "",
+      "correct_answer": "",
+      "explanation": ""
+    }
   ]
 }
-
-The "diagram" key above is shown as null only to indicate where it goes.
-Whenever a diagram is actually appropriate for that item (per the
-DIAGRAMS section above), replace null with the real diagram object
-described there. When no diagram is appropriate, you may set it to null
-or omit the key entirely for that item.
-
-Remember: use EITHER (definitions + formulae + worked_examples) OR
-(concept_groups) based on your Step 1 classification — leave the unused
-one as empty arrays. Never populate both structures for the same document.
-
-Do not return markdown.
-Do not return explanations.
-Do not return any text outside JSON.
-
-The study material will be provided after this instruction.
