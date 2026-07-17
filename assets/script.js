@@ -55,7 +55,7 @@ function collapseAllSections() {
 }
 
 // ----------------------------
-// Page navigation (Study / Formulas / MCQ Test)
+// Page navigation (Study / Concept tabs / Definitions / Formulas / MCQ Test)
 // ----------------------------
 function showPage(pageId, linkEl) {
     document.querySelectorAll('.page').forEach(function (p) {
@@ -75,6 +75,20 @@ function showPage(pageId, linkEl) {
         var inst = window.__ILM_CHART_INSTANCES__[c.id];
         if (inst) inst.resize();
     });
+}
+
+// ----------------------------
+// Concept-tab "jump to topic" dropdown
+// ----------------------------
+function jumpToConcept(selectEl) {
+    var targetId = selectEl.value;
+    if (!targetId) return;
+    var el = document.getElementById(targetId);
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    // Reset back to the placeholder so the same topic can be re-selected later.
+    selectEl.selectedIndex = 0;
 }
 
 // ----------------------------
@@ -181,18 +195,18 @@ function showResults() {
     document.getElementById('rs-correct').textContent = correct;
     document.getElementById('rs-wrong').textContent = total - correct;
     document.getElementById('rs-score').textContent = pct + '%';
-    document.getElementById('results-title').textContent = pct >= 60 ? 'Great Job! 🎉' : 'Keep Practicing! 💪';
+    document.getElementById('results-title').textContent = pct >= 60 ? 'Great Job! \uD83C\uDF89' : 'Keep Practicing! \uD83D\uDCAA';
 
     var msgs = ['Keep going!', 'Good attempt!', 'Well done!', 'Excellent!', 'Outstanding!'];
     var lvl = pct >= 90 ? 4 : pct >= 75 ? 3 : pct >= 60 ? 2 : pct >= 40 ? 1 : 0;
     document.getElementById('results-msg').textContent = msgs[lvl] + ' You scored ' + correct + ' out of ' + total + '.';
 
-    var rv = '<h4 style="font-weight:700;color:var(--navy);margin-bottom:6px;">📋 Detailed Answer Review</h4>';
+    var rv = '<h4 style="font-weight:700;color:var(--navy);margin-bottom:6px;">\uD83D\uDCCB Detailed Answer Review</h4>';
     rv += '<table class="review-table"><tr><th>#</th><th>Question &amp; Explanation</th><th>Your Answer</th><th>Correct Answer</th><th>Result</th></tr>';
     answers.forEach(function (a, i) {
         if (!a) return;
-        rv += '<tr><td>' + (i + 1) + '</td><td>' + a.qtext + '<div class="rv-exp">💡 ' + a.exp + '</div></td><td>' + a.selectedText + '</td><td>' + a.correctText + '</td>';
-        rv += '<td class="' + (a.isCorrect ? 'rv-correct' : 'rv-wrong') + '">' + (a.isCorrect ? '✓' : '✗') + '</td></tr>';
+        rv += '<tr><td>' + (i + 1) + '</td><td>' + a.qtext + '<div class="rv-exp">\uD83D\uDCA1 ' + a.exp + '</div></td><td>' + a.selectedText + '</td><td>' + a.correctText + '</td>';
+        rv += '<td class="' + (a.isCorrect ? 'rv-correct' : 'rv-wrong') + '">' + (a.isCorrect ? '\u2713' : '\u2717') + '</td></tr>';
     });
     rv += '</table>';
     document.getElementById('review-area').innerHTML = rv;
