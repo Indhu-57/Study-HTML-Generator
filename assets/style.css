@@ -129,6 +129,17 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 .answer-box.detailed .ae-quote{background:#f8f5ee;border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 18px;margin:12px 0;}
 .answer-box.detailed .ae-quote-heading{font-weight:700;color:#92400e;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
 .answer-box.detailed .ae-quote-lines p{font-family:'Merriweather',serif;font-style:italic;color:#4b3f2a;font-size:.92rem;line-height:1.85;margin:0;}
+/* Grammar / must-memorise rule blocks: distinct highlight so the exact
+   rule stands out from the surrounding explanation. */
+.answer-box.detailed .ae-rule{background:#fef2f2;border:1px solid #fecaca;border-left:4px solid var(--red);border-radius:0 8px 8px 0;padding:12px 18px;margin:12px 0;}
+.answer-box.detailed .ae-rule-heading{font-weight:700;color:#b91c1c;font-size:.72rem;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.answer-box.detailed .ae-rule-text{color:#7f1d1d;font-size:.92rem;font-weight:600;line-height:1.6;margin:0;}
+
+/* Jump-to-topic dropdown at the top of each concept-group tab */
+.concept-jump{margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.concept-jump label{font-size:.8rem;font-weight:600;color:var(--muted);}
+.concept-jump select{padding:7px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:.85rem;color:var(--navy);background:#fff;cursor:pointer;font-family:'Inter',sans-serif;}
+.concept-jump select:focus{outline:none;border-color:var(--sky);}
 
 /* MCQ INTRO */
 .mcq-intro{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:40px;text-align:center;margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.05);}
