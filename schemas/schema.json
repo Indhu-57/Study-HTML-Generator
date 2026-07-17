@@ -33,6 +33,7 @@
         {
           "title": "",
           "quick_answer": "",
+          "image_query": "",
           "detailed_explanation": [
             {
               "type": "text",
