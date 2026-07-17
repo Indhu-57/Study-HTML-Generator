@@ -221,14 +221,20 @@ Each entry in "concepts" must contain:
   would materially help understanding (an apparatus, specimen, diagram,
   or setup) - leave it as an empty string for a concept that does not
   need one, even within a practical subject.
-- diagram - OPTIONAL. Only include this when the source material itself
-  presents a classification, hierarchy, process flow, or relationship
-  between several named items as a chart/tree/flow diagram (for example,
-  a Sangam-literature classification tree, a chain of cause and effect, a
-  step-by-step process flow). Use the "flowchart" shape described in the
-  DIAGRAMS section below. Omit this field (or set to null) for concepts
-  that do not involve this kind of structural relationship - do not
-  invent a diagram just to have one.
+- diagram - OPTIONAL. Include this whenever the source material itself
+  contains an actual diagram/chart/figure relevant to this concept - a
+  classification tree, a process flow, or a labeled box-and-arrow
+  diagram (system architecture, apparatus setup, a cyclical process with
+  feedback arrows, an organisation chart). Use whichever of "flowchart"
+  (strict parent-child tree) or "block_diagram" (boxes with arrows,
+  optionally grouped in a container - use this whenever boxes connect to
+  more than one other box or connect back to an earlier box) is the
+  closer structural match; both are described in the DIAGRAMS section
+  below. Reproduce a diagram that is genuinely present in the source
+  material even if it takes effort to describe it structurally - do not
+  drop it just because it does not fit a simple tree. Omit this field
+  (or set to null) only when the concept has no associated diagram in
+  the source material - never invent one that is not actually there.
 - detailed_explanation - a list of blocks building a full, well-structured,
   exam-ready explanation suitable for a long-answer question. Each block is
   an object with:
@@ -311,10 +317,11 @@ DIAGRAMS
 
 Most diagram types (venn2/venn3, function_graph, bar/line/pie) apply only
 to quantitative subjects (definitions, worked examples, or practice
-problems). The one exception is "flowchart", which is the only diagram
-type usable inside "concept_groups" (theory/practical subjects) - see
-CONCEPT GROUPS above for when to attach one. Do not attach venn2/venn3,
-function_graph, or bar/line/pie diagrams to a concept_groups concept.
+problems). The two exceptions are "flowchart" and "block_diagram", which
+are the only diagram types usable inside "concept_groups" (theory/
+practical subjects) - see CONCEPT GROUPS above for when to attach one.
+Do not attach venn2/venn3, function_graph, or bar/line/pie diagrams to a
+concept_groups concept.
 
 If a diagram would genuinely help explain a definition, worked example,
 or practice problem, attach an optional "diagram" field to that entry.
@@ -408,7 +415,7 @@ The "diagram" field must be exactly one of the following shapes:
    or implied by the source material.
 
 4) FLOWCHART / MIND MAP (classification trees, hierarchies, process
-   flows - the ONLY diagram type usable inside "concept_groups"):
+   flows expressed as a strict parent-child tree):
 
    {"type": "flowchart", "title": "Sangam Literature Classification", "root": {"label": "Sangam Literature", "children": [{"label": "Pathinen Kilkanakku", "children": [{"label": "Naladiyar"}, {"label": "Thirukkural"}]}, {"label": "Ettuthokai", "children": [{"label": "Natrinai"}, {"label": "Kurunthokai"}]}, {"label": "Pattuppattu", "children": [{"label": "Thirumurugatruppadai"}, {"label": "Perumpanatruppadai"}]}]}}
 
@@ -419,6 +426,66 @@ The "diagram" field must be exactly one of the following shapes:
    classification, hierarchy, or step-by-step flow between several named
    items - not for a simple two-item comparison (use "text"/"rule" blocks
    for that instead) and not invented just to have a diagram.
+
+5) BLOCK DIAGRAM (boxes connected by arrows - system/architecture
+   diagrams, process diagrams with feedback/cyclic arrows, or any
+   "box and arrow" figure that is NOT a strict parent-child tree):
+
+   {"type": "block_diagram", "title": "Basic Computer Organization",
+    "boxes": [
+      {"id": "input", "label": "Input Unit", "sublabel": "Mouse, Keyboard, etc."},
+      {"id": "control", "label": "Control Unit", "group": "cpu"},
+      {"id": "alu", "label": "Arithmetic and Logic Unit", "group": "cpu"},
+      {"id": "memory", "label": "Memory Unit", "group": "cpu"},
+      {"id": "output", "label": "Output Unit", "sublabel": "Monitor, Printer, etc."}
+    ],
+    "groups": [{"id": "cpu", "label": "Central Processing Unit"}],
+    "connections": [
+      {"from": "input", "to": "control"},
+      {"from": "control", "to": "alu"},
+      {"from": "alu", "to": "control"},
+      {"from": "alu", "to": "memory"},
+      {"from": "memory", "to": "alu"},
+      {"from": "alu", "to": "output"}
+    ]}
+
+   THIS IS THE TYPE TO USE whenever the source material contains an
+   actual labeled box-and-arrow diagram (system architecture, apparatus
+   setup, cyclical process, organisation chart with cross-links) that a
+   "flowchart" tree cannot represent because boxes connect to more than
+   one other box, connect back to an earlier box, or are visually grouped
+   inside a labeled container.
+
+   - "boxes" - every labeled box in the diagram. "id" is a short internal
+     key you invent (used only to wire up "connections" and "group" -
+     never shown to the reader). "label" is the box's visible text.
+     "sublabel" is optional smaller text shown under the box (e.g. an
+     example list like "Mouse, Keyboard, etc.").
+   - "group" (optional, on a box) - the "id" of a "groups" entry this box
+     is visually nested inside (e.g. three boxes drawn inside one big
+     "Central Processing Unit" rectangle in the source diagram).
+   - "groups" (optional) - one entry per container rectangle that visibly
+     wraps several boxes in the source diagram, each with an "id" and a
+     "label" (the container's own caption, e.g. "Central Processing
+     Unit"). Omit entirely if the source diagram has no such container.
+   - "connections" - every arrow in the source diagram, as {"from":
+     box_id, "to": box_id}, one entry per arrow (including BOTH
+     directions if the source shows two separate arrowheads between the
+     same pair of boxes, as in the example above between "control" and
+     "alu"). Reproduce every arrow that is actually drawn in the source
+     diagram - do not simplify a two-way connection into one arrow, and
+     do not add an arrow that is not in the source.
+
+   For any diagram, chart, apparatus drawing, or architecture figure that
+   genuinely appears in the source material (described in the extracted
+   text, including any "[DIAGRAM ON THIS PAGE: ...]" description you are
+   given), you MUST reproduce it using whichever of these 5 diagram types
+   is the closest structural match - venn2/venn3 for set diagrams,
+   function_graph for a plotted function, bar/line/pie for a data chart,
+   flowchart for a strict hierarchy/tree, block_diagram for anything else
+   with boxes and arrows. Do not drop a diagram that is present in the
+   source material just because it does not fit neatly into venn/chart -
+   block_diagram exists specifically to catch these cases.
 
 Only use these exact shapes. Do not add any other diagram "type" value.
 
