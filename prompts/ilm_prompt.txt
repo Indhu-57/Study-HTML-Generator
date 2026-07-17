@@ -8,10 +8,11 @@ The generated learning material must be suitable for undergraduate and postgradu
 STEP 0 - CLASSIFY THE SUBJECT TYPE (DO THIS FIRST)
 ==================================================
 
-Before generating anything else, decide whether the study material is
-QUANTITATIVE or THEORY-BASED, and set the "subject_type" field to one of
-these two exact values. This decision controls which sections you fill in
-below, so get it right before doing anything else.
+Before generating anything else, decide which ONE of these three
+categories best fits the study material, and set the "subject_type"
+field to exactly one of: "quantitative", "theory", "practical". This
+decision controls which sections you fill in below, so get it right
+before doing anything else.
 
 - "quantitative": the material is built around calculations, formulas,
   numeric worked examples, diagrams derived from numbers/equations, or
@@ -20,16 +21,27 @@ below, so get it right before doing anything else.
   heavy calculation, Computer Science algorithms/complexity analysis.
 
 - "theory": the material explains concepts, processes, principles,
-  classifications, or skills in prose, without the topic being built
-  around solving numeric problems. Examples: Language and Communication
-  Skills, Literature, History, Management/Organisational Behaviour, Law,
-  Sociology, Political Science, most Humanities subjects, and any general
-  "theory" unit even inside an otherwise technical course (e.g. a
-  definitions-only unit in a Computer Science subject).
+  classifications, language, literature, or skills in prose, without the
+  topic being built around solving numeric problems. Examples: Language
+  and Communication Skills, Literature (prose, poetry, drama), Grammar,
+  History, Management/Organisational Behaviour, Law, Sociology, Political
+  Science, most Humanities subjects, and any general "theory" unit even
+  inside an otherwise technical course (e.g. a definitions-only unit in a
+  Computer Science subject).
 
-If a subject has both kinds of content, classify it by what the MAJORITY
-of the material is: a few illustrative numbers inside an otherwise
-conceptual passage does not make a topic "quantitative".
+- "practical": the material is a hands-on/illustrative guide where
+  diagrams, apparatus, specimens, or visual references are central to
+  understanding it - for example, a laboratory manual, an anatomy/biology
+  specimen guide, a chemistry apparatus setup guide, an engineering
+  drawing/circuit guide, or a procedural "how-to" that is normally taught
+  with pictures. Only use this category when the material's own content
+  is genuinely built around things that need to be seen, not merely
+  because a diagram could theoretically be added.
+
+If a subject has more than one kind of content, classify it by what the
+MAJORITY of the material is: a few illustrative numbers inside an
+otherwise conceptual passage does not make a topic "quantitative", and a
+single passing mention of an apparatus does not make a topic "practical".
 
 This classification changes the output structure as follows:
 
@@ -37,12 +49,15 @@ This classification changes the output structure as follows:
   "worked_examples" as described below. Leave "concept_groups" as an empty
   array [].
 
-- "theory" -> leave "definitions", "formulae", and "worked_examples" as
-  empty arrays []. Instead, fill in "concept_groups" as described in the
-  CONCEPT GROUPS section below. Do NOT invent formulae or numeric worked
-  examples for a theory subject just to fill the schema - if the source
-  material has no calculations, "formulae" and "worked_examples" must
-  stay empty.
+- "theory" or "practical" -> leave "definitions", "formulae", and
+  "worked_examples" as empty arrays []. Instead, fill in "concept_groups"
+  as described in the CONCEPT GROUPS section below. Do NOT invent
+  formulae or numeric worked examples for a theory/practical subject just
+  to fill the schema - if the source material has no calculations,
+  "formulae" and "worked_examples" must stay empty. For "practical"
+  subjects specifically, also fill in "image_query" on each concept as
+  described in CONCEPT GROUPS, since visual reference is central to this
+  category.
 
 "important_notes", "summary", "practice_problems", and "mcqs" are always
 generated regardless of subject_type (see their sections below).
@@ -144,7 +159,12 @@ applied at least once. Each worked example must contain:
   must NOT start with its own number or the word "Step" (e.g. do not write
   "1. Recall the rule..." or "Step 1: Recall the rule..." - just write
   "Recall the rule..."), since each step is already displayed on its own
-  line automatically.
+  line automatically. EACH STEP MUST BE ONE ACTION OR ONE IDEA ONLY - if
+  the source material bundles two actions into a single sentence (e.g.
+  "Substitute the values and simplify"), split that into two separate
+  step strings ("Substitute the values." / "Simplify the expression.") so
+  the solution reads as a clean line-by-line sequence, never as a dense
+  paragraph disguised as one "step".
 - solution - the final answer only (a short string, not the steps list)
 
 Write all mathematical expressions using plain caret notation for
@@ -153,13 +173,13 @@ characters or LaTeX; the display layer converts ^ into proper
 superscripts automatically.
 
 ==================================================
-CONCEPT GROUPS  (theory subjects only)
+CONCEPT GROUPS  (theory and practical subjects)
 ==================================================
 
-For a theory-based subject, organise the ENTIRE study material into
-"concept_groups" instead of Definitions/Formulae/Worked Examples. Each
-group becomes its own tab in the final material, so group concepts the
-way a textbook or syllabus would group them into topics/sections (for
+For a theory or practical subject, organise the ENTIRE study material
+into "concept_groups" instead of Definitions/Formulae/Worked Examples.
+Each group becomes its own tab in the final material, so group concepts
+the way a textbook or syllabus would group them into topics/sections (for
 example, in a Communication Skills unit: "Listening Skills", "Reading
 Skills", "Speaking Skills", "Writing Skills" would each be a separate
 group). Aim for 3 to 8 groups depending on how much the material covers -
@@ -181,15 +201,30 @@ Each entry in "concepts" must contain:
 - quick_answer - a crisp, self-contained 2-4 sentence explanation of the
   concept, suitable for a short-answer question. This must be understandable
   on its own, without needing the detailed_explanation below it.
+- image_query ("practical" subject_type only; omit or leave empty string
+  for "theory") - a short, specific search phrase (in English, 3-8 words)
+  that would find a genuinely useful reference image for this concept -
+  for example, "titration apparatus setup diagram" or "human heart
+  cross-section labeled diagram". Only include this when a real image
+  would materially help understanding (an apparatus, specimen, diagram,
+  or setup) - leave it as an empty string for a concept that does not
+  need one, even within a practical subject.
 - detailed_explanation - a list of blocks building a full, well-structured,
   exam-ready explanation suitable for a long-answer question. Each block is
   an object with:
-    - type - either "text" (default) or "quote". Use "quote" ONLY for
-      block (b) below.
+    - type - one of "text" (default), "quote", or "rule".
+      - "quote": ONLY for block (b) below - a literary/poetic quotation.
+      - "rule": for a grammar rule, formula-free principle, or any single
+        statement that a student must memorise exactly and that deserves
+        to visually stand out from the surrounding explanation (e.g. a
+        grammar agreement rule, a definition-by-law, a named principle).
+        Keep "rule" blocks short - one rule per block, stated in one or
+        two sentences, not a paragraph.
+      - "text": everything else.
     - heading - a short sub-heading for that block (e.g. "Why listening
-      skills are important", "1. Deep Listening", "Conclusion"), or null
-      for a block that has no sub-heading (this is normal for "quote"
-      blocks and for an opening block that has no sub-heading).
+      skills are important", "1. Deep Listening", "Rule", "Conclusion"),
+      or null for a block that has no sub-heading (this is normal for
+      "quote" blocks and for an opening block that has no sub-heading).
     - text - the content of that block (see formatting rules below).
 
   FORMAT AS LINE-BY-LINE POINTS, NOT DENSE PARAGRAPHS. Each "text" block
@@ -199,7 +234,11 @@ Each entry in "concepts" must contain:
   points, split it across several separate blocks (each with its own
   heading) rather than keeping it as one dense block. A student should be
   able to scan straight down the list of blocks and follow the structure
-  of the answer at a glance.
+  of the answer at a glance. This line-by-line rule applies to EVERY
+  subject that uses concept_groups, including grammar topics: explain a
+  grammar point as a sequence of short blocks, never as one dense
+  paragraph, and always pull out its core rule into its own "rule" block
+  as described above so it is not buried inside general explanation.
 
   A typical detailed_explanation should have: (a) one opening block
   (type: "text", heading: null) that introduces the concept in 1-2
@@ -215,10 +254,12 @@ Each entry in "concepts" must contain:
   meaning, types/components/features, and, for a quoted verse, its
   explanation/interpretation placed in its OWN block(s) immediately after
   the quote block - never inside the same block as the quotation itself,
-  and (d) a closing block headed "Conclusion". Do NOT invent content that
-  is not supported by the source material - if the material only gives a
-  short definition for a concept and nothing more, keep detailed_explanation
-  correspondingly short rather than padding it with invented sub-points.
+  (d) for a grammar concept, one or more "rule" blocks isolating each core
+  rule the student must remember, and (e) a closing block headed
+  "Conclusion". Do NOT invent content that is not supported by the source
+  material - if the material only gives a short definition for a concept
+  and nothing more, keep detailed_explanation correspondingly short
+  rather than padding it with invented sub-points.
 - Use standard terminology from the source material; do not use
   underscore_separated_identifiers or code-style tokens anywhere in
   quick_answer or detailed_explanation text - write in normal prose.
@@ -393,6 +434,7 @@ Return ONLY valid JSON, matching this structure exactly:
         {
           "title": "",
           "quick_answer": "",
+          "image_query": "",
           "detailed_explanation": [
             {"type": "text", "heading": null, "text": ""}
           ]
@@ -418,8 +460,9 @@ or omit the key entirely for that item.
 
 Remember: for "subject_type": "quantitative", fill in "definitions",
 "formulae" and "worked_examples", and leave "concept_groups": []. For
-"subject_type": "theory", fill in "concept_groups", and leave
-"definitions": [], "formulae": [], and "worked_examples": [].
+"subject_type": "theory" or "practical", fill in "concept_groups", and
+leave "definitions": [], "formulae": [], and "worked_examples": [].
+"image_query" only ever applies within "practical" concept_groups.
 
 Do not return markdown.
 Do not return explanations.
