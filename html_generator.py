@@ -110,10 +110,12 @@ def _slugify(text, fallback):
 
 def _render_concept_groups(concept_groups):
     """
-    Builds (nav_links_html, pages_html) for theory-subject "concept
-    groups" - one tab per group, each concept showing a quick_answer and
-    a fully structured detailed_explanation (text and quote blocks).
-    Returns ([] , []) if concept_groups is empty.
+    Builds (nav_links_html, pages_html) for theory/practical-subject
+    "concept groups" - one tab per group, each concept showing a
+    quick_answer and a fully structured detailed_explanation (text, quote,
+    and rule blocks). Each tab also gets a "jump to topic" dropdown so
+    long tabs with many concepts are easy to navigate.
+    Returns ([], []) if concept_groups is empty.
     """
     if not concept_groups:
         return [], []
@@ -127,9 +129,13 @@ def _render_concept_groups(concept_groups):
         nav_links.append(f'    <a onclick="showPage(\'{tab_id}\', this)">{_format_math(title)}</a>')
 
         concept_blocks = []
-        for concept in group.get("concepts", []):
-            c_title = _format_math(concept.get("title", ""))
+        jump_options = []
+        for ci, concept in enumerate(group.get("concepts", [])):
+            c_title_raw = concept.get("title", "")
+            c_title = _format_math(c_title_raw)
+            c_anchor = _slugify(c_title_raw, f"{tab_id}-c{ci}")
             quick_answer = _format_math(concept.get("quick_answer", ""))
+            jump_options.append((c_anchor, c_title_raw))
 
             detail_html = ""
             for block in concept.get("detailed_explanation", []):
@@ -144,6 +150,9 @@ def _render_concept_groups(concept_groups):
                     quote_lines_html = "".join(f"<p>{_format_math(ln.strip())}</p>" for ln in lines)
                     heading_html = f'<div class="ae-quote-heading">{_format_math(heading)}</div>' if heading else ""
                     detail_html += f'<div class="ae-quote">{heading_html}<div class="ae-quote-lines">{quote_lines_html}</div></div>'
+                elif block_type == "rule":
+                    heading_html = f'<div class="ae-rule-heading">{_format_math(heading)}</div>' if heading else '<div class="ae-rule-heading">Rule</div>'
+                    detail_html += f'<div class="ae-rule">{heading_html}<p class="ae-rule-text">{_format_math(text)}</p></div>'
                 else:
                     if heading:
                         detail_html += f'<p class="ae-subhead">{_format_math(heading)}</p>'
@@ -151,7 +160,7 @@ def _render_concept_groups(concept_groups):
                         detail_html += f'<p class="ae-text">{_format_math(text)}</p>'
 
             concept_blocks.append(f'''
-<div class="concept-block">
+<div class="concept-block" id="{c_anchor}">
 <div class="concept-title">{c_title}</div>
 <div class="answer-box quick">
 <div class="answer-label">Quick Answer</div>
@@ -163,12 +172,28 @@ def _render_concept_groups(concept_groups):
 </div>
 </div>''')
 
+        jump_html = ""
+        if len(jump_options) > 1:
+            options_html = "".join(
+                f'<option value="{anchor}">{_format_math(label)}</option>'
+                for anchor, label in jump_options
+            )
+            jump_html = f'''
+<div class="concept-jump">
+<label for="jump-{tab_id}">Jump to topic:</label>
+<select id="jump-{tab_id}" onchange="jumpToConcept(this)">
+<option value="">Select a topic...</option>
+{options_html}
+</select>
+</div>'''
+
         page_html = f'''
 <div id="page-{tab_id}" class="page">
 <div class="container">
 <div class="concept-tab-intro">
 <h2>{_format_math(title)}</h2>
 <p>Clear, well-structured explanations for every concept in this topic \u2014 a quick answer for fast revision, and a fully developed explanation for deeper understanding.</p>
+{jump_html}
 </div>
 {"".join(concept_blocks)}
 </div>
@@ -184,9 +209,11 @@ def generate_html(data):
 
     subject_type = (data.get("subject_type") or "").strip().lower()
     concept_groups = data.get("concept_groups") or []
-    # Trust concept_groups actually being populated over the subject_type
-    # label alone, in case Gemini sets the label inconsistently with the
-    # content it actually produced.
+    # Both "theory" and "practical" subjects use the concept-group tab
+    # layout; only "quantitative" keeps the Definitions/Formulas/Examples
+    # layout. Trust concept_groups actually being populated over the
+    # subject_type label alone, in case Gemini sets the label
+    # inconsistently with the content it actually produced.
     is_theory = bool(concept_groups) and subject_type != "quantitative"
 
     # Chart.js needs its configs registered as JS + a <canvas> placeholder;
