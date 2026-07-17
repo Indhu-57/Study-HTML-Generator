@@ -108,6 +108,35 @@ def _slugify(text, fallback):
     return slug or fallback
 
 
+def _render_flowchart_node(node):
+    """Recursively renders one flowchart/mind-map node and its children
+    as a nested <ul><li> tree (styled into a connected chart via CSS)."""
+    if not isinstance(node, dict):
+        return ""
+    label = _format_math(node.get("label", ""))
+    children = node.get("children") or []
+    children_html = ""
+    if children:
+        children_html = "<ul>" + "".join(
+            f"<li>{_render_flowchart_node(c)}</li>" for c in children if isinstance(c, dict)
+        ) + "</ul>"
+    return f'<span class="fc-label">{label}</span>{children_html}'
+
+
+def _render_flowchart(spec):
+    """Renders a {"type": "flowchart", "title": ..., "root": {...}} spec
+    as a pure HTML/CSS tree diagram. Returns "" if the spec is invalid."""
+    if not isinstance(spec, dict):
+        return ""
+    root = spec.get("root")
+    if not isinstance(root, dict) or not root.get("label"):
+        return ""
+    title = spec.get("title", "")
+    title_html = f'<div class="flowchart-title">{_format_math(title)}</div>' if title else ""
+    tree_html = f'<ul class="flowchart-tree"><li>{_render_flowchart_node(root)}</li></ul>'
+    return f'<div class="flowchart-wrap">{title_html}<div class="flowchart-scroll">{tree_html}</div></div>'
+
+
 def _render_concept_groups(concept_groups):
     """
     Builds (nav_links_html, pages_html) for theory/practical-subject
@@ -137,6 +166,8 @@ def _render_concept_groups(concept_groups):
             quick_answer = _format_math(concept.get("quick_answer", ""))
             jump_options.append((c_anchor, c_title_raw))
 
+            diagram_html = _render_flowchart(concept.get("diagram"))
+
             detail_html = ""
             for block in concept.get("detailed_explanation", []):
                 if not isinstance(block, dict):
@@ -153,6 +184,9 @@ def _render_concept_groups(concept_groups):
                 elif block_type == "rule":
                     heading_html = f'<div class="ae-rule-heading">{_format_math(heading)}</div>' if heading else '<div class="ae-rule-heading">Rule</div>'
                     detail_html += f'<div class="ae-rule">{heading_html}<p class="ae-rule-text">{_format_math(text)}</p></div>'
+                elif block_type == "example":
+                    heading_html = f'<div class="ae-example-heading">{_format_math(heading)}</div>' if heading else '<div class="ae-example-heading">Example</div>'
+                    detail_html += f'<div class="ae-example">{heading_html}<p class="ae-example-text">{_format_math(text)}</p></div>'
                 else:
                     if heading:
                         detail_html += f'<p class="ae-subhead">{_format_math(heading)}</p>'
@@ -168,6 +202,7 @@ def _render_concept_groups(concept_groups):
 </div>
 <div class="answer-box detailed">
 <div class="answer-label">Detailed Explanation</div>
+{diagram_html}
 {detail_html}
 </div>
 </div>''')
