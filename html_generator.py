@@ -137,6 +137,128 @@ def _render_flowchart(spec):
     return f'<div class="flowchart-wrap">{title_html}<div class="flowchart-scroll">{tree_html}</div></div>'
 
 
+def _render_block_box(label, sublabel=None, extra_class=""):
+    sub_html = f'<div class="bd-sublabel">{_format_math(sublabel)}</div>' if sublabel else ""
+    cls = ("bd-box " + extra_class).strip()
+    return f'<div class="{cls}"><div class="bd-label">{_format_math(label)}</div>{sub_html}</div>'
+
+
+def _render_block_diagram(spec):
+    """
+    Renders a {"type": "block_diagram", "boxes": [...], "groups": [...],
+    "connections": [...]} spec as labeled boxes joined by arrows
+    (pure HTML/CSS, no JS needed). Two layouts:
+      - grouped: boxes that share a "group" are drawn inside a bordered
+        container, stacked vertically with up/down arrows between
+        adjacent boxes based on which connections exist between them;
+        ungrouped boxes are placed to the left or right of the container
+        depending on whether they feed into or out of the group.
+      - linear fallback (no groups): boxes are drawn left-to-right in
+        connection order, each pair joined by a single arrow.
+    Returns "" if the spec is invalid.
+    """
+    if not isinstance(spec, dict):
+        return ""
+    boxes = [b for b in (spec.get("boxes") or []) if isinstance(b, dict)]
+    if not boxes:
+        return ""
+    connections = [c for c in (spec.get("connections") or []) if isinstance(c, dict)]
+    groups = [g for g in (spec.get("groups") or []) if isinstance(g, dict)]
+    title = spec.get("title", "")
+    title_html = f'<div class="flowchart-title">{_format_math(title)}</div>' if title else ""
+
+    box_by_id = {b.get("id"): b for b in boxes if b.get("id")}
+
+    if groups:
+        group = groups[0]
+        group_id = group.get("id")
+        group_label = group.get("label", "")
+        grouped_boxes = [b for b in boxes if b.get("group") == group_id]
+        external_boxes = [b for b in boxes if b.get("group") != group_id]
+        grouped_ids = {b.get("id") for b in grouped_boxes}
+
+        left_boxes, right_boxes = [], []
+        for b in external_boxes:
+            bid = b.get("id")
+            goes_in = any(c.get("from") == bid and c.get("to") in grouped_ids for c in connections)
+            goes_out = any(c.get("to") == bid and c.get("from") in grouped_ids for c in connections)
+            if goes_out and not goes_in:
+                right_boxes.append(b)
+            else:
+                left_boxes.append(b)
+
+        left_html = "".join(_render_block_box(b.get("label", ""), b.get("sublabel")) for b in left_boxes)
+        right_html = "".join(_render_block_box(b.get("label", ""), b.get("sublabel")) for b in right_boxes)
+        left_arrow = '<div class="bd-arrow">&#8594;</div>' if left_boxes else ""
+        right_arrow = '<div class="bd-arrow">&#8594;</div>' if right_boxes else ""
+
+        internal_html = ""
+        for i, b in enumerate(grouped_boxes):
+            internal_html += _render_block_box(b.get("label", ""), b.get("sublabel"), extra_class="bd-box-internal")
+            if i < len(grouped_boxes) - 1:
+                nxt = grouped_boxes[i + 1]
+                down = any(c.get("from") == b.get("id") and c.get("to") == nxt.get("id") for c in connections)
+                up = any(c.get("from") == nxt.get("id") and c.get("to") == b.get("id") for c in connections)
+                arrows = ""
+                if down:
+                    arrows += '<span class="bd-vconn-down">&#8595;</span>'
+                if up:
+                    arrows += '<span class="bd-vconn-up">&#8593;</span>'
+                internal_html += f'<div class="bd-vconn-wrap">{arrows}</div>'
+
+        group_html = (
+            f'<div class="bd-group"><div class="bd-group-label">{_format_math(group_label)}</div>'
+            f'<div class="bd-group-inner">{internal_html}</div></div>'
+        )
+
+        body = (
+            f'<div class="bd-row">'
+            f'<div class="bd-col">{left_html}</div>{left_arrow}'
+            f'{group_html}{right_arrow}'
+            f'<div class="bd-col">{right_html}</div>'
+            f'</div>'
+        )
+        return f'<div class="flowchart-wrap">{title_html}<div class="flowchart-scroll">{body}</div></div>'
+
+    # Fallback: simple left-to-right chain in connection order
+    chain_ids = []
+    seen = set()
+    for c in connections:
+        for key in ("from", "to"):
+            bid = c.get(key)
+            if bid and bid not in seen:
+                chain_ids.append(bid)
+                seen.add(bid)
+    if not chain_ids:
+        chain_ids = [b.get("id") for b in boxes if b.get("id")]
+
+    parts = []
+    for i, bid in enumerate(chain_ids):
+        b = box_by_id.get(bid)
+        if not b:
+            continue
+        parts.append(_render_block_box(b.get("label", ""), b.get("sublabel")))
+        if i < len(chain_ids) - 1:
+            parts.append('<div class="bd-arrow">&#8594;</div>')
+    body = f'<div class="bd-chain">{"".join(parts)}</div>'
+    return f'<div class="flowchart-wrap">{title_html}<div class="flowchart-scroll">{body}</div></div>'
+
+
+def _render_structural_diagram(spec):
+    """Dispatches a diagram spec to _render_flowchart or
+    _render_block_diagram based on its "type". Returns "" for anything
+    else (venn2/venn3/bar/line/pie/function_graph are handled separately
+    inside generate_html, since those need the Chart.js registry)."""
+    if not isinstance(spec, dict):
+        return ""
+    kind = spec.get("type")
+    if kind == "flowchart":
+        return _render_flowchart(spec)
+    if kind == "block_diagram":
+        return _render_block_diagram(spec)
+    return ""
+
+
 def _render_concept_groups(concept_groups):
     """
     Builds (nav_links_html, pages_html) for theory/practical-subject
@@ -166,7 +288,7 @@ def _render_concept_groups(concept_groups):
             quick_answer = _format_math(concept.get("quick_answer", ""))
             jump_options.append((c_anchor, c_title_raw))
 
-            diagram_html = _render_flowchart(concept.get("diagram"))
+            diagram_html = _render_structural_diagram(concept.get("diagram"))
 
             detail_html = ""
             for block in concept.get("detailed_explanation", []):
