@@ -478,14 +478,23 @@ The "diagram" field must be exactly one of the following shapes:
 
    For any diagram, chart, apparatus drawing, or architecture figure that
    genuinely appears in the source material (described in the extracted
-   text, including any "[DIAGRAM ON THIS PAGE: ...]" description you are
-   given), you MUST reproduce it using whichever of these 5 diagram types
-   is the closest structural match - venn2/venn3 for set diagrams,
+   text, including any "[DIAGRAM ON THIS PAGE: ...]" or "[DIAGRAM IN
+   DOCUMENT: ...]" description you are given - these come from OCR run
+   automatically on embedded images the plain text layer would otherwise
+   miss entirely, so treat them as real evidence a diagram exists there,
+   even if the OCR text itself is fragmented or out of reading order),
+   you MUST reproduce it using whichever of these 5 diagram types is the
+   closest structural match - venn2/venn3 for set diagrams,
    function_graph for a plotted function, bar/line/pie for a data chart,
    flowchart for a strict hierarchy/tree, block_diagram for anything else
    with boxes and arrows. Do not drop a diagram that is present in the
    source material just because it does not fit neatly into venn/chart -
-   block_diagram exists specifically to catch these cases.
+   block_diagram exists specifically to catch these cases. If a
+   "[DIAGRAM...]" marker's OCR text is too fragmented to confidently
+   reconstruct exact box positions and arrows, use the surrounding prose
+   (which usually names and explains the same components) together with
+   the OCR'd labels to produce your best faithful reconstruction, rather
+   than skipping the diagram entirely.
 
 Only use these exact shapes. Do not add any other diagram "type" value.
 
