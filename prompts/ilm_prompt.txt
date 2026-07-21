@@ -89,7 +89,18 @@ GENERAL RULES
 9. Do not return markdown.
 10. Do not return explanations outside JSON.
 11. Do not use ```json.
-12. COMPLETENESS IS MANDATORY - do not skip, summarise away, or select a
+12. VALID JSON ESCAPING IS MANDATORY. If any generated text contains a
+    literal backslash character - this happens most often in
+    mathematical notation (\alpha, \frac{1}{2}, \sqrt), regex patterns
+    (\d+, \s*), or file paths (C:\Users\name) - it MUST be written as a
+    doubled backslash (\\\\) in the JSON output, exactly as JSON syntax
+    requires. A single, undoubled backslash followed by a letter that is
+    not one of the standard JSON escape letters (n, t, r, b, f, u, ", \,
+    /) produces invalid JSON that cannot be parsed at all, breaking the
+    entire response. When in doubt, prefer describing notation in words
+    (e.g. "alpha" instead of "\alpha", "the square root of" instead of
+    "\sqrt") over using a literal backslash.
+13. COMPLETENESS IS MANDATORY - do not skip, summarise away, or select a
     subset of the source material's actual content. Every distinct fact,
     example, and - especially - every poetic/verse quotation present in
     the source material must appear in the output somewhere. If the
