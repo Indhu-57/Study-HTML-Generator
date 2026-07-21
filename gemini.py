@@ -81,6 +81,70 @@ one of the letters A, B, C, or D, regardless of language.
 
 
 # ==========================================
+# JSON REPAIR
+# ==========================================
+# Gemini occasionally emits a raw backslash inside a JSON string value
+# that is not a valid JSON escape sequence - most often from math
+# notation (\alpha, \frac{1}{2}), regex patterns (\d+), or file paths
+# (C:\Users) that it did not double into \\ the way JSON requires. That
+# breaks json.loads with "Invalid \escape". This repairs it by scanning
+# the raw response text and doubling any backslash that is not part of a
+# genuine JSON escape, before parsing - and is a no-op on already-valid
+# JSON, so it never changes a response that was fine to begin with.
+
+# Note: \b (backspace) and \f (formfeed) are deliberately NOT treated as
+# "safe, leave alone" escapes here, even though they are technically
+# valid JSON escapes - study material never intentionally contains a
+# literal backspace/formfeed character, but frequently contains
+# unescaped math notation that starts with those letters (\beta, \frac,
+# \forall). Treating \b / \f as already-valid would silently corrupt
+# that text instead of fixing it.
+_SAFE_JSON_ESCAPES = set('"\\/nrtu')
+
+
+def _repair_invalid_json_escapes(text):
+    """Doubles every backslash in `text` that is not part of a genuine
+    JSON escape sequence (\\" \\\\ \\/ \\n \\r \\t \\uXXXX)."""
+    out = []
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch != "\\":
+            out.append(ch)
+            i += 1
+            continue
+
+        nxt = text[i + 1] if i + 1 < n else ""
+        if nxt == "u" and i + 6 <= n and all(c in "0123456789abcdefABCDEF" for c in text[i + 2:i + 6]):
+            out.append(text[i:i + 6])
+            i += 6
+        elif nxt in _SAFE_JSON_ESCAPES and nxt != "u":
+            out.append(text[i:i + 2])
+            i += 2
+        else:
+            out.append("\\\\")
+            i += 1
+    return "".join(out)
+
+
+def _parse_gemini_json(raw_text):
+    """
+    Parses Gemini's JSON response, automatically repairing invalid
+    backslash escapes if the first parse attempt fails. Raises the
+    original JSONDecodeError (not the retry's) if repair doesn't help,
+    so the real problem is still visible in the traceback.
+    """
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError as first_error:
+        try:
+            return json.loads(_repair_invalid_json_escapes(raw_text))
+        except json.JSONDecodeError:
+            raise first_error
+
+
+# ==========================================
 # GENERATE LEARNING MATERIAL
 # ==========================================
 def generate_learning_material(extracted_text, language="English"):
@@ -113,7 +177,7 @@ Study Material
                     "Gemini returned an empty response. This can happen if the "
                     "output was cut off - try uploading fewer pages at once."
                 )
-            return json.loads(response.text)
+            return _parse_gemini_json(response.text)
         except ServerError as e:
             last_error = e
             is_overloaded = getattr(e, "code", None) == 503 or "UNAVAILABLE" in str(e)
