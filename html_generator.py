@@ -10,23 +10,95 @@ from charts import build_chart_config
 _EXPONENT_RE = re.compile(r'\^(\([^)]*\)|-?[A-Za-z0-9]+)')
 _LEADING_STEP_NUM_RE = re.compile(r'^\s*(?:step\s*)?\d+\s*[\.\):]\s*', re.IGNORECASE)
 
+# Matches Python/JSON-style nested matrix notation like
+# "[[1, 0, 2], [-1, 3, 1], [2, -2, 4]]" or "[[2, -1], [5, 3]]" so it can be
+# converted into an actual bracketed grid instead of shown as raw text.
+_MATRIX_RE = re.compile(r'\[\s*\[[^\[\]]+\](?:\s*,\s*\[[^\[\]]+\]\s*)*\]')
+_MATRIX_ROW_RE = re.compile(r'\[([^\[\]]+)\]')
 
-def _format_math(text):
+
+def _render_matrix_html(matrix_str):
     """
-    Turns caret-style exponents like (a + b)^2 or x^3589 into proper
-    HTML superscripts: (a + b)<sup>2</sup>, x<sup>3589</sup>.
-    Leaves everything else untouched.
+    Parses a matched "[[...],[...],...]" substring into rows/cells (plain
+    string splitting, not literal_eval, so symbolic entries like lambda or
+    a11 work too, not just plain numbers) and returns a bracketed grid
+    layout. Returns None if the substring isn't actually a well-formed
+    rectangular matrix, so the caller can leave the original text as-is.
     """
-    if not isinstance(text, str) or "^" not in text:
+    rows_raw = _MATRIX_ROW_RE.findall(matrix_str)
+    if not rows_raw:
+        return None
+
+    rows = []
+    ncols = None
+    for row_str in rows_raw:
+        cells = [c.strip() for c in row_str.split(",")]
+        cells = [c for c in cells if c != ""]
+        if not cells:
+            return None
+        if ncols is None:
+            ncols = len(cells)
+        elif len(cells) != ncols:
+            return None  # ragged rows aren't a real matrix — leave as plain text
+        rows.append(cells)
+
+    if not rows or ncols is None:
+        return None
+
+    cells_html = "".join(
+        f'<span class="matrix-cell">{cell}</span>' for row in rows for cell in row
+    )
+
+    return (
+        '<span class="matrix-wrap">'
+        '<span class="matrix-bracket matrix-bracket-left"></span>'
+        f'<span class="matrix-grid" style="grid-template-columns:repeat({ncols},minmax(22px,auto));'
+        f'grid-template-rows:repeat({len(rows)},auto);">{cells_html}</span>'
+        '<span class="matrix-bracket matrix-bracket-right"></span>'
+        '</span>'
+    )
+
+
+def _render_matrices(text):
+    """
+    Finds every "[[...],[...]]" style matrix in a string and replaces it
+    with a real bracketed grid. Leaves the original text untouched for any
+    match that doesn't parse as a clean rectangular matrix.
+    """
+    if not isinstance(text, str) or "[[" not in text:
         return text
 
     def repl(m):
-        exp = m.group(1)
-        if exp.startswith("(") and exp.endswith(")"):
-            exp = exp[1:-1]
-        return f"<sup>{exp}</sup>"
+        html = _render_matrix_html(m.group(0))
+        return html if html else m.group(0)
 
-    return _EXPONENT_RE.sub(repl, text)
+    return _MATRIX_RE.sub(repl, text)
+
+
+def _format_math(text):
+    """
+    Renders inline math notation embedded in plain text:
+    - bracket matrices like [[1, 0, 2], [-1, 3, 1], [2, -2, 4]] become a
+      real bracketed grid instead of raw Python-list-style text.
+    - caret-style exponents like (a + b)^2 or x^3589 become proper HTML
+      superscripts: (a + b)<sup>2</sup>, x<sup>3589</sup>.
+    Leaves everything else untouched.
+    """
+    if not isinstance(text, str):
+        return text
+
+    text = _render_matrices(text)
+
+    if "^" in text:
+        def repl(m):
+            exp = m.group(1)
+            if exp.startswith("(") and exp.endswith(")"):
+                exp = exp[1:-1]
+            return f"<sup>{exp}</sup>"
+
+        text = _EXPONENT_RE.sub(repl, text)
+
+    return text
 
 
 def _clean_step(text):
