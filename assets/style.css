@@ -67,6 +67,14 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 .def-examples strong{color:var(--navy);font-size:.85rem;}
 .def-examples ul{margin-top:6px;}
 
+/* MATRICES (inline bracketed grid, replacing raw "[[1,0],[0,1]]" text) */
+.matrix-wrap{display:inline-flex;align-items:stretch;vertical-align:middle;margin:2px 4px;}
+.matrix-bracket{width:6px;flex-shrink:0;}
+.matrix-bracket-left{border-left:2.5px solid currentColor;border-top:2.5px solid currentColor;border-bottom:2.5px solid currentColor;border-radius:4px 0 0 4px;}
+.matrix-bracket-right{border-right:2.5px solid currentColor;border-top:2.5px solid currentColor;border-bottom:2.5px solid currentColor;border-radius:0 4px 4px 0;}
+.matrix-grid{display:inline-grid;gap:3px 16px;padding:5px 9px;align-items:center;justify-items:center;font-family:'JetBrains Mono',monospace;font-size:.95em;}
+.matrix-cell{padding:0 2px;white-space:nowrap;}
+
 /* FORMULAS */
 .formula-grid{display:flex;flex-direction:column;gap:14px;margin:14px 0;}
 .formula-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
@@ -124,23 +132,16 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 .answer-box.detailed .ae-subhead{font-weight:700;color:var(--navy);font-size:.9rem;margin:12px 0 4px;}
 .answer-box.detailed .ae-subhead:first-of-type{margin-top:2px;}
 .answer-box.detailed .ae-text{font-size:.9rem;color:var(--text);line-height:1.7;margin-bottom:2px;}
-/* Poetic / verse quotation blocks: kept visually separate from the
-   surrounding explanation, with each original line on its own row. */
 .answer-box.detailed .ae-quote{background:#f8f5ee;border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 18px;margin:12px 0;}
 .answer-box.detailed .ae-quote-heading{font-weight:700;color:#92400e;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
 .answer-box.detailed .ae-quote-lines p{font-family:'Merriweather',serif;font-style:italic;color:#4b3f2a;font-size:.92rem;line-height:1.85;margin:0;}
-/* Grammar / must-memorise rule blocks: distinct highlight so the exact
-   rule stands out from the surrounding explanation. */
 .answer-box.detailed .ae-rule{background:#fef2f2;border:1px solid #fecaca;border-left:4px solid var(--red);border-radius:0 8px 8px 0;padding:12px 18px;margin:12px 0;}
 .answer-box.detailed .ae-rule-heading{font-weight:700;color:#b91c1c;font-size:.72rem;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
 .answer-box.detailed .ae-rule-text{color:#7f1d1d;font-size:.92rem;font-weight:600;line-height:1.6;margin:0;}
-/* Illustrative examples embedded in an explanation: pulled out into
-   their own callout, separate from the surrounding paragraph. */
 .answer-box.detailed .ae-example{background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid var(--accent2);border-radius:0 8px 8px 0;padding:12px 18px;margin:12px 0;}
 .answer-box.detailed .ae-example-heading{font-weight:700;color:#047857;font-size:.72rem;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
 .answer-box.detailed .ae-example-text{color:#065f46;font-size:.9rem;line-height:1.65;margin:0;}
 
-/* Jump-to-topic dropdown at the top of each concept-group tab */
 .concept-jump{margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .concept-jump label{font-size:.8rem;font-weight:600;color:var(--muted);}
 .concept-jump select{padding:7px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:.85rem;color:var(--navy);background:#fff;cursor:pointer;font-family:'Inter',sans-serif;}
