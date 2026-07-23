@@ -16,6 +16,51 @@ _LEADING_STEP_NUM_RE = re.compile(r'^\s*(?:step\s*)?\d+\s*[\.\):]\s*', re.IGNORE
 _MATRIX_RE = re.compile(r'\[\s*\[[^\[\]]+\](?:\s*,\s*\[[^\[\]]+\]\s*)*\]')
 _MATRIX_ROW_RE = re.compile(r'\[([^\[\]]+)\]')
 
+# Gemini sometimes writes raw LaTeX commands (\lambda, \times, etc.)
+# instead of the actual character. Convert the common ones to real
+# Unicode symbols so they don't show up as literal backslash-text.
+_LATEX_GREEK = {
+    "alpha": "\u03b1", "beta": "\u03b2", "gamma": "\u03b3", "delta": "\u03b4",
+    "epsilon": "\u03b5", "zeta": "\u03b6", "eta": "\u03b7", "theta": "\u03b8",
+    "iota": "\u03b9", "kappa": "\u03ba", "lambda": "\u03bb", "mu": "\u03bc",
+    "nu": "\u03bd", "xi": "\u03be", "pi": "\u03c0", "rho": "\u03c1",
+    "sigma": "\u03c3", "tau": "\u03c4", "upsilon": "\u03c5", "phi": "\u03c6",
+    "chi": "\u03c7", "psi": "\u03c8", "omega": "\u03c9",
+    "Gamma": "\u0393", "Delta": "\u0394", "Theta": "\u0398", "Lambda": "\u039b",
+    "Xi": "\u039e", "Pi": "\u03a0", "Sigma": "\u03a3", "Upsilon": "\u03a5",
+    "Phi": "\u03a6", "Psi": "\u03a8", "Omega": "\u03a9",
+}
+_LATEX_SYMBOLS = {
+    "times": "\u00d7", "cdot": "\u00b7", "pm": "\u00b1", "mp": "\u2213",
+    "leq": "\u2264", "geq": "\u2265", "neq": "\u2260", "infty": "\u221e",
+    "sqrt": "\u221a", "sum": "\u03a3", "int": "\u222b",
+    "rightarrow": "\u2192", "to": "\u2192", "leftarrow": "\u2190",
+    "approx": "\u2248", "in": "\u2208", "notin": "\u2209",
+    "subset": "\u2282", "cup": "\u222a", "cap": "\u2229",
+    "emptyset": "\u2205", "partial": "\u2202",
+}
+_LATEX_CMD_RE = re.compile(r'\\([A-Za-z]+)')
+
+
+def _convert_latex_symbols(text):
+    """
+    Converts raw LaTeX commands like \\lambda or \\times into the actual
+    Unicode character (λ, ×) instead of leaving the literal backslash-text
+    visible on the page. Unknown commands are left untouched.
+    """
+    if not isinstance(text, str) or "\\" not in text:
+        return text
+
+    def repl(m):
+        name = m.group(1)
+        if name in _LATEX_GREEK:
+            return _LATEX_GREEK[name]
+        if name in _LATEX_SYMBOLS:
+            return _LATEX_SYMBOLS[name]
+        return m.group(0)
+
+    return _LATEX_CMD_RE.sub(repl, text)
+
 
 def _render_matrix_html(matrix_str):
     """
@@ -78,6 +123,8 @@ def _render_matrices(text):
 def _format_math(text):
     """
     Renders inline math notation embedded in plain text:
+    - raw LaTeX commands like \\lambda or \\times become real Unicode
+      symbols (λ, ×) instead of literal backslash-text.
     - bracket matrices like [[1, 0, 2], [-1, 3, 1], [2, -2, 4]] become a
       real bracketed grid instead of raw Python-list-style text.
     - caret-style exponents like (a + b)^2 or x^3589 become proper HTML
@@ -87,6 +134,7 @@ def _format_math(text):
     if not isinstance(text, str):
         return text
 
+    text = _convert_latex_symbols(text)
     text = _render_matrices(text)
 
     if "^" in text:
