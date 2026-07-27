@@ -7,7 +7,6 @@ from venn import render_venn_svg
 from charts import build_chart_config
 
 
-_EXPONENT_RE = re.compile(r'\^(\([^)]*\)|-?[A-Za-z0-9]+)')
 _LEADING_STEP_NUM_RE = re.compile(r'^\s*(?:step\s*)?\d+\s*[\.\):]\s*', re.IGNORECASE)
 
 # Matches Python/JSON-style nested matrix notation like
@@ -60,6 +59,71 @@ def _convert_latex_symbols(text):
         return m.group(0)
 
     return _LATEX_CMD_RE.sub(repl, text)
+
+
+def _scan_super_sub_group(text, i):
+    """
+    Given `text` and a position `i` right after a ^ or _ trigger character,
+    returns (content, end_index) for the group that follows:
+    - if text[i] == '(': finds the TRUE matching closing paren by depth
+      counting (correctly handling nested parens and nested ^/_ inside,
+      e.g. e^((a+ib)*x) or e^(a*cos^(-1)(x))), and returns the inner
+      content - itself recursively formatted - plus the index just past
+      the closing paren.
+    - otherwise: captures an optional leading '-' followed by a run of
+      alphanumeric characters (e.g. x^2, y_n, a^-1).
+    Returns (None, i) if nothing valid follows (e.g. an unmatched paren),
+    so the caller can leave that '^'/'_' untouched rather than guessing.
+    """
+    n = len(text)
+    if i >= n:
+        return None, i
+    if text[i] == '(':
+        depth = 1
+        j = i + 1
+        while j < n and depth > 0:
+            if text[j] == '(':
+                depth += 1
+            elif text[j] == ')':
+                depth -= 1
+            j += 1
+        if depth == 0:
+            inner = _format_super_sub(text[i + 1:j - 1])
+            return inner, j
+        return None, i
+    else:
+        m = re.match(r'-?[A-Za-z0-9]+', text[i:])
+        if m:
+            return m.group(0), i + len(m.group(0))
+        return None, i
+
+
+def _format_super_sub(text):
+    """
+    Converts caret exponents (x^2, e^((a+ib)*x)) into <sup>, and
+    underscore subscripts (y_n, u_(n-1)) into <sub>, using a real
+    balanced-parenthesis scanner rather than a regex - a regex like
+    \\^(\\([^)]*\\)|...) cannot handle a NESTED paren inside the exponent
+    (e.g. e^((a+ib)*x)) and silently produces mismatched, stray
+    parentheses in the output instead. This also finally renders the
+    y_n / y_(n+1) style subscripts used throughout calculus derivations,
+    which previously showed up as plain underscore text.
+    """
+    result = []
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch in ("^", "_") and i + 1 < n:
+            content, end = _scan_super_sub_group(text, i + 1)
+            if content is not None:
+                tag = "sup" if ch == "^" else "sub"
+                result.append(f"<{tag}>{content}</{tag}>")
+                i = end
+                continue
+        result.append(ch)
+        i += 1
+    return "".join(result)
 
 
 def _render_matrix_html(matrix_str):
@@ -127,8 +191,10 @@ def _format_math(text):
       symbols (λ, ×) instead of literal backslash-text.
     - bracket matrices like [[1, 0, 2], [-1, 3, 1], [2, -2, 4]] become a
       real bracketed grid instead of raw Python-list-style text.
-    - caret-style exponents like (a + b)^2 or x^3589 become proper HTML
-      superscripts: (a + b)<sup>2</sup>, x<sup>3589</sup>.
+    - caret-style exponents like (a + b)^2, x^3589, or e^((a+ib)*x) become
+      proper HTML superscripts, correctly handling nested parentheses.
+    - underscore subscripts like y_n or y_(n+1) become proper HTML
+      subscripts (previously shown as literal underscore text).
     Leaves everything else untouched.
     """
     if not isinstance(text, str):
@@ -137,14 +203,8 @@ def _format_math(text):
     text = _convert_latex_symbols(text)
     text = _render_matrices(text)
 
-    if "^" in text:
-        def repl(m):
-            exp = m.group(1)
-            if exp.startswith("(") and exp.endswith(")"):
-                exp = exp[1:-1]
-            return f"<sup>{exp}</sup>"
-
-        text = _EXPONENT_RE.sub(repl, text)
+    if "^" in text or "_" in text:
+        text = _format_super_sub(text)
 
     return text
 
