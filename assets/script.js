@@ -55,26 +55,18 @@ function collapseAllSections() {
 }
 
 // ----------------------------
-// Page navigation (Study / Concept tabs / Definitions / Formulas / MCQ Test)
+// Section navigation (single continuous page - nav links jump-scroll to
+// their section instead of hiding/showing separate "pages")
 // ----------------------------
 function showPage(pageId, linkEl) {
-    document.querySelectorAll('.page').forEach(function (p) {
-        p.classList.remove('active');
-    });
     var target = document.getElementById('page-' + pageId);
-    target.classList.add('active');
-
+    if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     document.querySelectorAll('.nav-links a').forEach(function (a) {
         a.classList.remove('active');
     });
     if (linkEl) linkEl.classList.add('active');
-
-    // Charts created while their tab was hidden render at zero size;
-    // resize them now that the tab is actually visible.
-    target.querySelectorAll('canvas').forEach(function (c) {
-        var inst = window.__ILM_CHART_INSTANCES__[c.id];
-        if (inst) inst.resize();
-    });
 }
 
 // ----------------------------
