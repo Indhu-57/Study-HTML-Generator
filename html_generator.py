@@ -439,20 +439,73 @@ def _render_structural_diagram(spec):
     return ""
 
 
+def _render_literary_devices(devices):
+    if not devices:
+        return ""
+    items = "".join(
+        f'<div class="device-item"><span class="device-name">{_format_math(d.get("device",""))}</span>'
+        f'<span class="device-explanation">{_format_math(d.get("explanation",""))}</span></div>'
+        for d in devices if isinstance(d, dict) and d.get("device")
+    )
+    if not items:
+        return ""
+    return f'<div class="device-list"><div class="device-list-label">Literary Devices</div>{items}</div>'
+
+
+def _render_themes(themes):
+    if not themes:
+        return ""
+    chips = "".join(f'<span class="theme-chip">{_format_math(t)}</span>' for t in themes if t)
+    if not chips:
+        return ""
+    return f'<div class="theme-row"><span class="theme-row-label">Themes:</span>{chips}</div>'
+
+
+def _render_practice_drill(drill, tab_id, c_anchor):
+    if not drill:
+        return ""
+    items = ""
+    for i, d in enumerate(drill, start=1):
+        if not isinstance(d, dict) or not d.get("question"):
+            continue
+        drill_id = f"drill-{tab_id}-{c_anchor}-{i}"
+        items += f'''
+<div class="drill-card">
+<span class="drill-q">{_format_math(d.get("question",""))}</span>
+<button onclick="toggleReveal('{drill_id}')">Show Answer</button>
+<div id="{drill_id}" style="display:none; margin-top:8px;">{_format_math(d.get("answer",""))}</div>
+</div>'''
+    if not items:
+        return ""
+    return f'<div class="drill-list"><div class="drill-list-label">Practice Drill</div>{items}</div>'
+
+
 def _render_concept_groups(concept_groups):
     """
-    Builds (nav_links_html, pages_html) for theory/practical-subject
-    "concept groups" - one tab per group, each concept showing a
-    quick_answer and a fully structured detailed_explanation (text, quote,
-    and rule blocks). Each tab also gets a "jump to topic" dropdown so
-    long tabs with many concepts are easy to navigate.
-    Returns ([], []) if concept_groups is empty.
+    Builds (nav_links_html, pages_html, quotes_collection_html,
+    grammar_collection_html) for literature/language/theory/practical
+    subject "concept groups" - one tab per group, each concept showing a
+    quick_answer and a fully structured detailed_explanation (text,
+    quote, example, and rule blocks), plus literature-specific
+    (author_context/themes/literary_devices) or language-specific
+    (practice_drill) fields when present. Each tab also gets a "jump to
+    topic" dropdown so long tabs with many concepts are easy to navigate.
+
+    Also aggregates every "quote" block into a standalone "Quotes &
+    Verses" tab and every "rule" block into a standalone "Grammar Quick
+    Reference" tab, built from whatever blocks are actually present
+    (rather than being gated strictly on subject_type), so it still works
+    even if a response is mislabeled.
+
+    Returns ([], [], "", "") if concept_groups is empty.
     """
     if not concept_groups:
-        return [], []
+        return [], [], "", ""
 
     nav_links = []
     pages = []
+    all_quotes = []  # list of (group_title, concept_title, heading, lines_html)
+    all_rules = []   # list of (group_title, concept_title, heading, text)
 
     for gi, group in enumerate(concept_groups):
         title = group.get("group_title") or f"Topic {gi + 1}"
@@ -470,6 +523,13 @@ def _render_concept_groups(concept_groups):
 
             diagram_html = _render_structural_diagram(concept.get("diagram"))
 
+            author_html = ""
+            author_context = concept.get("author_context")
+            if author_context:
+                author_html = f'<div class="concept-author">{_format_math(author_context)}</div>'
+
+            themes_html = _render_themes(concept.get("themes"))
+
             detail_html = ""
             for block in concept.get("detailed_explanation", []):
                 if not isinstance(block, dict):
@@ -483,9 +543,13 @@ def _render_concept_groups(concept_groups):
                     quote_lines_html = "".join(f"<p>{_format_math(ln.strip())}</p>" for ln in lines)
                     heading_html = f'<div class="ae-quote-heading">{_format_math(heading)}</div>' if heading else ""
                     detail_html += f'<div class="ae-quote">{heading_html}<div class="ae-quote-lines">{quote_lines_html}</div></div>'
+                    if quote_lines_html:
+                        all_quotes.append((title, c_title_raw, heading, quote_lines_html))
                 elif block_type == "rule":
                     heading_html = f'<div class="ae-rule-heading">{_format_math(heading)}</div>' if heading else '<div class="ae-rule-heading">Rule</div>'
                     detail_html += f'<div class="ae-rule">{heading_html}<p class="ae-rule-text">{_format_math(text)}</p></div>'
+                    if text:
+                        all_rules.append((title, c_title_raw, heading, text))
                 elif block_type == "example":
                     heading_html = f'<div class="ae-example-heading">{_format_math(heading)}</div>' if heading else '<div class="ae-example-heading">Example</div>'
                     detail_html += f'<div class="ae-example">{heading_html}<p class="ae-example-text">{_format_math(text)}</p></div>'
@@ -495,17 +559,24 @@ def _render_concept_groups(concept_groups):
                     if text:
                         detail_html += f'<p class="ae-text">{_format_math(text)}</p>'
 
+            devices_html = _render_literary_devices(concept.get("literary_devices"))
+            drill_html = _render_practice_drill(concept.get("practice_drill"), tab_id, c_anchor)
+
             concept_blocks.append(f'''
 <div class="concept-block" id="{c_anchor}">
 <div class="concept-title">{c_title}</div>
+{author_html}
 <div class="answer-box quick">
 <div class="answer-label">Quick Answer</div>
+{themes_html}
 <p>{quick_answer}</p>
 </div>
 <div class="answer-box detailed">
 <div class="answer-label">Detailed Explanation</div>
 {diagram_html}
 {detail_html}
+{devices_html}
+{drill_html}
 </div>
 </div>''')
 
@@ -537,7 +608,47 @@ def _render_concept_groups(concept_groups):
 </div>'''
         pages.append(page_html)
 
-    return nav_links, pages
+    # ---- Aggregation tab: Quotes & Verses ----
+    quotes_html = ""
+    if all_quotes:
+        items = ""
+        for group_title, concept_title, heading, lines_html in all_quotes:
+            label = _format_math(heading) if heading else _format_math(concept_title)
+            items += f'''
+<div class="quote-collection-item">
+<div class="quote-collection-source">{_format_math(group_title)} \u2014 {_format_math(concept_title)}</div>
+<div class="ae-quote"><div class="ae-quote-heading">{label}</div><div class="ae-quote-lines">{lines_html}</div></div>
+</div>'''
+        quotes_html = f'''
+<div class="container">
+<div class="concept-tab-intro">
+<h2>\U0001F4D6 Quotes &amp; Verses</h2>
+<p>Every quotation from this material gathered in one place for quick revision.</p>
+</div>
+{items}
+</div>'''
+
+    # ---- Aggregation tab: Grammar Quick Reference ----
+    rules_html = ""
+    if all_rules:
+        items = ""
+        for group_title, concept_title, heading, text in all_rules:
+            label = _format_math(heading) if heading else "Rule"
+            items += f'''
+<div class="quote-collection-item">
+<div class="quote-collection-source">{_format_math(group_title)} \u2014 {_format_math(concept_title)}</div>
+<div class="ae-rule"><div class="ae-rule-heading">{label}</div><p class="ae-rule-text">{_format_math(text)}</p></div>
+</div>'''
+        rules_html = f'''
+<div class="container">
+<div class="concept-tab-intro">
+<h2>\U0001F4CC Grammar Quick Reference</h2>
+<p>Every rule from this material gathered in one place for fast revision before an exam.</p>
+</div>
+{items}
+</div>'''
+
+    return nav_links, pages, quotes_html, rules_html
 
 
 def generate_html(data):
@@ -652,7 +763,9 @@ def generate_html(data):
     # -----------------------------------------------------
     # CONCEPT GROUP TABS (theory subjects only)
     # -----------------------------------------------------
-    concept_nav_links, concept_pages_html = _render_concept_groups(concept_groups) if is_theory else ([], [])
+    concept_nav_links, concept_pages_html, quotes_collection_html, grammar_collection_html = (
+        _render_concept_groups(concept_groups) if is_theory else ([], [], "", "")
+    )
 
     # -----------------------------------------------------
     # DEFINITIONS TAB - term, meaning, and 3-10 examples each
@@ -693,7 +806,9 @@ def generate_html(data):
                 for step in steps:
                     cleaned = _clean_step(step)
                     if cleaned:
-                        steps_html += f'<p class="step-line">{cleaned}</p>'
+                        is_continuation = cleaned.lstrip().startswith("=")
+                        cls = "step-line eq-continuation" if is_continuation else "step-line"
+                        steps_html += f'<p class="{cls}">{cleaned}</p>'
                 heading = _format_math(title) if title else "Worked Example"
                 if problem:
                     heading += f" \u2014 {_format_math(problem)}"
@@ -778,6 +893,12 @@ def generate_html(data):
     if is_theory:
         nav_extra = "\n".join(concept_nav_links)
         pages_extra = "\n".join(concept_pages_html)
+        if quotes_collection_html:
+            nav_extra += '\n    <a onclick="showPage(\'quotes\', this)">\U0001F4D6 Quotes & Verses</a>'
+            pages_extra += f'\n<div id="page-quotes" class="page">{quotes_collection_html}</div>'
+        if grammar_collection_html:
+            nav_extra += '\n    <a onclick="showPage(\'grammar-ref\', this)">\U0001F4CC Grammar Reference</a>'
+            pages_extra += f'\n<div id="page-grammar-ref" class="page">{grammar_collection_html}</div>'
     else:
         nav_extra = (
             '    <a onclick="showPage(\'definitions\', this)">\U0001F4DA Definitions</a>\n'
@@ -786,18 +907,21 @@ def generate_html(data):
         )
         pages_extra = f'''
 <div id="page-definitions" class="page">
+<div class="page-section-title"><h2>\U0001F4DA Definitions</h2></div>
 <div class="container">
 {definitions_html}
 </div>
 </div>
 
 <div id="page-formulas" class="page">
+<div class="page-section-title"><h2>\u2797 Formulas</h2></div>
 <div class="container">
 {formulas_page_html}
 </div>
 </div>
 
 <div id="page-examples" class="page">
+<div class="page-section-title"><h2>\u270F\uFE0F Examples</h2></div>
 <div class="container">
 {examples_page_html}
 </div>
