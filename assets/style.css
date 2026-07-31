@@ -75,6 +75,8 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 .matrix-bracket{width:6px;flex-shrink:0;}
 .matrix-bracket-left{border-left:2.5px solid currentColor;border-top:2.5px solid currentColor;border-bottom:2.5px solid currentColor;border-radius:4px 0 0 4px;}
 .matrix-bracket-right{border-right:2.5px solid currentColor;border-top:2.5px solid currentColor;border-bottom:2.5px solid currentColor;border-radius:0 4px 4px 0;}
+.matrix-bar-left{border-left:2.5px solid currentColor;}
+.matrix-bar-right{border-right:2.5px solid currentColor;}
 .matrix-grid{display:inline-grid;gap:3px 16px;padding:5px 9px;align-items:center;justify-items:center;font-family:'JetBrains Mono',monospace;font-size:.95em;}
 .matrix-cell{padding:0 2px;white-space:nowrap;}
 
