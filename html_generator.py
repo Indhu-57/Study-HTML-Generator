@@ -40,6 +40,27 @@ _LATEX_SYMBOLS = {
 }
 _LATEX_CMD_RE = re.compile(r'\\([A-Za-z]+)')
 
+# Gemini sometimes spells a Greek letter out as a plain word instead of
+# either the backslash command or the actual character (e.g. writing
+# "lambda" instead of "\lambda" or "λ"). Catch that too, matching whole
+# words only (word boundaries) so this doesn't corrupt unrelated English
+# text that happens to contain one of these words.
+_GREEK_WORD_RE = re.compile(
+    r'\b(' + '|'.join(sorted(set(list(_LATEX_GREEK.keys())), key=len, reverse=True)) + r')\b'
+)
+
+
+def _convert_greek_words(text):
+    """Converts bare Greek-letter words (lambda, alpha, Theta, ...) into
+    the actual Unicode character, matching whole words only."""
+    if not isinstance(text, str):
+        return text
+
+    def repl(m):
+        return _LATEX_GREEK.get(m.group(1), m.group(0))
+
+    return _GREEK_WORD_RE.sub(repl, text)
+
 
 def _convert_latex_symbols(text):
     """
@@ -126,12 +147,14 @@ def _format_super_sub(text):
     return "".join(result)
 
 
-def _render_matrix_html(matrix_str):
+def _render_matrix_html(matrix_str, style="bracket"):
     """
     Parses a matched "[[...],[...],...]" substring into rows/cells (plain
     string splitting, not literal_eval, so symbolic entries like lambda or
-    a11 work too, not just plain numbers) and returns a bracketed grid
-    layout. Returns None if the substring isn't actually a well-formed
+    a11 work too, not just plain numbers) and returns either a bracketed
+    grid (style="bracket", the default) or a determinant-style grid with
+    plain vertical bars instead of brackets (style="bars", used for
+    det(...)). Returns None if the substring isn't actually a well-formed
     rectangular matrix, so the caller can leave the original text as-is.
     """
     rows_raw = _MATRIX_ROW_RE.findall(matrix_str)
@@ -158,14 +181,25 @@ def _render_matrix_html(matrix_str):
         f'<span class="matrix-cell">{cell}</span>' for row in rows for cell in row
     )
 
+    left_cls = "matrix-bracket-left" if style == "bracket" else "matrix-bar-left"
+    right_cls = "matrix-bracket-right" if style == "bracket" else "matrix-bar-right"
+
     return (
         '<span class="matrix-wrap">'
-        '<span class="matrix-bracket matrix-bracket-left"></span>'
+        f'<span class="matrix-bracket {left_cls}"></span>'
         f'<span class="matrix-grid" style="grid-template-columns:repeat({ncols},minmax(22px,auto));'
         f'grid-template-rows:repeat({len(rows)},auto);">{cells_html}</span>'
-        '<span class="matrix-bracket matrix-bracket-right"></span>'
+        f'<span class="matrix-bracket {right_cls}"></span>'
         '</span>'
     )
+
+
+# Matches "det(" + a bracket-matrix + ")" so the whole det(...) wrapper
+# can be replaced with proper |A| determinant-bar notation, instead of
+# leaving the literal word "det(" next to a bracketed matrix.
+_DET_MATRIX_RE = re.compile(
+    r'det\(\s*(\[\s*\[[^\[\]]+\](?:\s*,\s*\[[^\[\]]+\]\s*)*\])\s*\)', re.IGNORECASE
+)
 
 
 def _render_matrices(text):
@@ -173,10 +207,22 @@ def _render_matrices(text):
     Finds every "[[...],[...]]" style matrix in a string and replaces it
     with a real bracketed grid. Leaves the original text untouched for any
     match that doesn't parse as a clean rectangular matrix.
+
+    A matrix wrapped in det(...) is rendered with plain vertical bars
+    (|A| notation) instead of brackets, and the "det(" / ")" wrapper text
+    itself is dropped, since |A| already means "determinant of A".
     """
     if not isinstance(text, str) or "[[" not in text:
         return text
 
+    if "det(" in text.lower():
+        def det_repl(m):
+            html = _render_matrix_html(m.group(1), style="bars")
+            return html if html else m.group(0)
+        text = _DET_MATRIX_RE.sub(det_repl, text)
+
+    if "[[" not in text:
+        return text
     def repl(m):
         html = _render_matrix_html(m.group(0))
         return html if html else m.group(0)
@@ -201,6 +247,7 @@ def _format_math(text):
         return text
 
     text = _convert_latex_symbols(text)
+    text = _convert_greek_words(text)
     text = _render_matrices(text)
 
     if "^" in text or "_" in text:
