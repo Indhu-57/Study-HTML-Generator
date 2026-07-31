@@ -34,13 +34,17 @@
           "title": "",
           "quick_answer": "",
           "image_query": "",
+          "author_context": "",
+          "themes": [],
+          "literary_devices": [
+            {"device": "", "explanation": ""}
+          ],
+          "practice_drill": [
+            {"question": "", "answer": ""}
+          ],
           "diagram": null,
           "detailed_explanation": [
-            {
-              "type": "text",
-              "heading": null,
-              "text": ""
-            }
+            {"type": "text", "heading": null, "text": ""}
           ]
         }
       ]
