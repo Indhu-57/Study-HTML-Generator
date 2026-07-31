@@ -44,7 +44,10 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 
 /* LAYOUT */
 .container{max-width:960px;margin:0 auto;padding:40px 20px;}
-.page{display:none;}.page.active{display:block;}
+.page{display:block;scroll-margin-top:64px;}
+.page + .page{border-top:6px solid #dde3f0;padding-top:8px;}
+.page-section-title{max-width:960px;margin:0 auto;padding:28px 20px 0;}
+.page-section-title h2{font-family:'Merriweather',serif;font-size:1.5rem;color:var(--navy);display:flex;align-items:center;gap:10px;}
 
 /* STUDY SECTIONS */
 .study-section{background:var(--card);border-radius:16px;border:1px solid var(--border);margin-bottom:24px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);}
@@ -88,6 +91,7 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 .step-list{display:flex;flex-direction:column;gap:2px;}
 .step-line{color:#065f46;font-size:.89rem;line-height:1.75;padding:6px 0;border-bottom:1px dashed rgba(6,95,70,.15);}
 .step-line:last-child{border-bottom:none;}
+.step-line.eq-continuation{padding-left:1.4em;font-family:'JetBrains Mono',monospace;}
 .step-text{color:#065f46;font-size:.89rem;line-height:1.6;padding-top:1px;}
 .step-answer{margin-top:14px;padding:10px 14px;background:#065f46;color:white;border-radius:8px;font-size:.87rem;font-weight:600;}
 .worked-example sup{font-size:.7em;}
@@ -117,6 +121,31 @@ nav{background:linear-gradient(135deg,var(--pale-green) 0%,var(--pale-green-dark
 .flashcard button{margin-top:8px;}
 
 /* CONCEPT TABS (theory-subject quick answer / detailed explanation) */
+.concept-author{padding:0 22px;margin-top:-6px;font-size:.82rem;font-style:italic;color:var(--muted);}
+
+/* Literature: theme chips */
+.theme-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.theme-row-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.theme-chip{background:#ede9fe;color:#5b21b6;font-size:.75rem;font-weight:600;padding:3px 11px;border-radius:20px;}
+
+/* Literature: literary devices */
+.device-list{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);}
+.device-list-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.device-item{display:flex;gap:8px;flex-wrap:wrap;padding:6px 0;font-size:.87rem;}
+.device-name{font-weight:700;color:#5b21b6;flex-shrink:0;}
+.device-explanation{color:var(--text);}
+
+/* Language: practice drill */
+.drill-list{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);}
+.drill-list-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.drill-card{background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid var(--accent2);border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:8px;}
+.drill-q{font-size:.87rem;color:#065f46;font-weight:600;}
+.drill-card button{margin-top:6px;display:block;}
+
+/* Quotes & Verses / Grammar Quick Reference collection tabs */
+.quote-collection-item{margin-bottom:20px;}
+.quote-collection-source{font-size:.72rem;font-weight:700;color:var(--sky);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+
 .concept-tab-intro{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:24px 28px;margin-bottom:22px;box-shadow:0 2px 10px rgba(0,0,0,.05);}
 .concept-tab-intro h2{font-family:'Merriweather',serif;font-size:1.3rem;color:var(--navy);margin-bottom:6px;}
 .concept-tab-intro p{color:var(--muted);font-size:.88rem;}
