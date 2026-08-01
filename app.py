@@ -17,6 +17,97 @@ st.set_page_config(
 )
 
 # =====================================================
+# THEME - light blue background, light green input boxes
+# with dark brown text inside, dark blue body text, and a
+# dark brown title. Also tightens vertical spacing so the
+# form fits on one screen as much as possible.
+# =====================================================
+
+st.markdown("""
+<style>
+:root {
+    --ilm-bg: #d7ebf8;
+    --ilm-box-bg: #dcf3df;
+    --ilm-box-text: #4a2f1f;
+    --ilm-text: #123a6b;
+    --ilm-title: #5c3a22;
+}
+
+.stApp {
+    background-color: var(--ilm-bg);
+}
+
+/* Tighten overall vertical spacing so the page fits on one screen */
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+}
+div[data-testid="stVerticalBlock"] > div {
+    gap: 0.4rem;
+}
+hr {
+    margin: 0.6rem 0 !important;
+}
+
+/* Title */
+h1 {
+    color: var(--ilm-title) !important;
+    font-weight: 800 !important;
+    margin-bottom: 0.1rem !important;
+}
+h2, h3, .stSubheader {
+    color: var(--ilm-title) !important;
+}
+
+/* All other body text (captions, paragraphs, labels) in dark blue */
+.stApp, .stApp p, .stApp span, .stApp label,
+[data-testid="stCaptionContainer"], .stMarkdown {
+    color: var(--ilm-text) !important;
+}
+
+/* Input boxes: light green background, dark brown text */
+.stTextInput input,
+.stSelectbox div[data-baseweb="select"] > div {
+    background-color: var(--ilm-box-bg) !important;
+    color: var(--ilm-box-text) !important;
+    border: 1.5px solid #b7ddbe !important;
+    border-radius: 8px !important;
+    font-size: 0.95rem !important;
+}
+.stTextInput input::placeholder {
+    color: var(--ilm-box-text) !important;
+    opacity: 0.65 !important;
+}
+.stSelectbox div[data-baseweb="select"] span {
+    color: var(--ilm-box-text) !important;
+}
+
+/* File uploader: full-width, same light green box family */
+[data-testid="stFileUploaderDropzone"] {
+    background-color: var(--ilm-box-bg) !important;
+    border: 2px dashed #b7ddbe !important;
+    border-radius: 10px !important;
+}
+[data-testid="stFileUploaderDropzone"] span,
+[data-testid="stFileUploaderDropzone"] small {
+    color: var(--ilm-box-text) !important;
+}
+
+/* Buttons */
+.stButton button, .stDownloadButton button {
+    background-color: var(--ilm-title) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+.stButton button:hover, .stDownloadButton button:hover {
+    background-color: #4a2f1f !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# =====================================================
 # SUPABASE CONNECTION
 # =====================================================
 
@@ -43,45 +134,45 @@ using Artificial Intelligence.
 st.divider()
 
 # =====================================================
-# COURSE INFORMATION
+# COURSE INFORMATION (two-column layout)
 # =====================================================
 
 st.subheader("Course Information")
 
-instructor = st.text_input(
-    "Course Instructor",
-    placeholder="e.g. Mrs Indhumathi T"
-)
+col1, col2 = st.columns(2)
 
-department = st.text_input(
-    "Department",
-    placeholder="e.g. Mathematics"
-)
+with col1:
+    instructor = st.text_input(
+        "Course Instructor",
+        placeholder="e.g. Mrs Indhumathi T"
+    )
+    programme = st.text_input(
+        "Programme",
+        placeholder="e.g. B.Sc. Mathematics"
+    )
+    topic = st.text_input(
+        "Topic",
+        placeholder="e.g. Travelling Salesman Problem"
+    )
 
-programme = st.text_input(
-    "Programme",
-    placeholder="e.g. B.Sc. Mathematics"
-)
-
-subject = st.text_input(
-    "Subject",
-    placeholder="e.g. Operations Research"
-)
-
-topic = st.text_input(
-    "Topic",
-    placeholder="e.g. Travelling Salesman Problem"
-)
-
-language = st.selectbox(
-    "Output Language",
-    SUPPORTED_LANGUAGES,
-    index=0,
-    help="The generated study material will be written in this language."
-)
+with col2:
+    department = st.text_input(
+        "Department",
+        placeholder="e.g. Mathematics"
+    )
+    subject = st.text_input(
+        "Subject",
+        placeholder="e.g. Operations Research"
+    )
+    language = st.selectbox(
+        "Output Language",
+        SUPPORTED_LANGUAGES,
+        index=0,
+        help="The generated study material will be written in this language."
+    )
 
 # =====================================================
-# FILE UPLOAD
+# FILE UPLOAD (full width, single column)
 # =====================================================
 
 study_file = st.file_uploader(
