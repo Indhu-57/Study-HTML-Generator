@@ -107,8 +107,14 @@ GENERAL RULES
 1. Do NOT invent information.
 2. Use only the concepts present in the study material.
 3. If some information is missing, leave that section empty.
-4. Write in clear academic English (unless a different output language is
-   explicitly requested elsewhere in this prompt).
+4. Write in clear, FORMAL academic English throughout the entire output
+   (unless a different output language is explicitly requested elsewhere
+   in this prompt). Every field must read like a published textbook or
+   technical reference, never like a spoken explanation. Do not open a
+   sentence with casual conversational fillers such as "First,", "Now,",
+   "Next,", "So,", "Then,", "Let's", "We can see that", or "Basically,"
+   anywhere in the output - state the action, definition, or result
+   directly and precisely instead.
 5. Explain difficult concepts in simple language.
 6. Maintain technical correctness.
 7. Avoid unnecessary repetition.
@@ -249,6 +255,22 @@ applied at least once. Each worked example must contain:
   usually starting with "=" once it is continuing the same expression),
   the way a worked solution is laid out in a textbook - never like a
   prose paragraph explaining the method in sentences.
+
+  USE FORMAL, TECHNICAL WORDING - NOT CASUAL/CONVERSATIONAL PHRASING.
+  Every step must read like a line from a published academic textbook or
+  technical reference, not like a spoken explanation. NEVER start a step
+  with a casual conversational filler such as "First,", "Now,", "Next,",
+  "So,", "Then,", "Let's", "We can see that", "Basically,", or similar -
+  state the action or result directly and precisely instead. For example,
+  write "Convert +45 to its 8-bit binary equivalent: 00101101." instead
+  of "First, represent +45 in 8-bit binary form. +45 = 00101101." - the
+  formal version states the action and its result in one precise
+  sentence, using exact technical terminology (e.g. "8-bit binary
+  equivalent" rather than "binary form"), rather than narrating the
+  process conversationally. This formality requirement applies to every
+  text field in the whole output, not just worked_examples - definitions,
+  concept_groups explanations, important_notes, and summary must all use
+  the same precise, formal academic register throughout.
 
   NEVER NARRATE UNCERTAINTY OR AMBIGUITY ABOUT THE SOURCE MATERIAL
   INSIDE A STEP. If the source material's given answer, formula, or sign
