@@ -28,6 +28,8 @@ st.markdown("""
 :root {
     --ilm-bg: #d7ebf8;
     --ilm-box-bg: #dcf3df;
+    --ilm-select-bg: #fbe0b8;
+    --ilm-btn-bg: #f9d4dc;
     --ilm-box-text: #4a2f1f;
     --ilm-text: #123a6b;
     --ilm-title: #5c3a22;
@@ -66,8 +68,7 @@ h2, h3, .stSubheader {
 }
 
 /* Input boxes: light green background, dark brown text */
-.stTextInput input,
-.stSelectbox div[data-baseweb="select"] > div {
+.stTextInput input {
     background-color: var(--ilm-box-bg) !important;
     color: var(--ilm-box-text) !important;
     border: 1.5px solid #b7ddbe !important;
@@ -78,8 +79,27 @@ h2, h3, .stSubheader {
     color: var(--ilm-box-text) !important;
     opacity: 0.65 !important;
 }
-.stSelectbox div[data-baseweb="select"] span {
+
+/* Select / dropdown boxes: light orange, including the popup list that
+   opens when clicked (rendered by baseweb, needs its own selectors) */
+.stSelectbox div[data-baseweb="select"] > div {
+    background-color: var(--ilm-select-bg) !important;
     color: var(--ilm-box-text) !important;
+    border: 1.5px solid #f0c896 !important;
+    border-radius: 8px !important;
+    font-size: 0.95rem !important;
+}
+.stSelectbox div[data-baseweb="select"] span,
+.stSelectbox div[data-baseweb="select"] svg {
+    color: var(--ilm-box-text) !important;
+}
+div[data-baseweb="popover"] ul[role="listbox"],
+div[data-baseweb="popover"] li {
+    background-color: var(--ilm-select-bg) !important;
+    color: var(--ilm-box-text) !important;
+}
+div[data-baseweb="popover"] li:hover {
+    background-color: #f5d9ae !important;
 }
 
 /* File uploader: full-width, same light green box family */
@@ -95,14 +115,14 @@ h2, h3, .stSubheader {
 
 /* Buttons */
 .stButton button, .stDownloadButton button {
-    background-color: var(--ilm-title) !important;
-    color: #ffffff !important;
-    border: none !important;
+    background-color: var(--ilm-btn-bg) !important;
+    color: var(--ilm-box-text) !important;
+    border: 1.5px solid #f0c5cd !important;
     border-radius: 8px !important;
     font-weight: 600 !important;
 }
 .stButton button:hover, .stDownloadButton button:hover {
-    background-color: #4a2f1f !important;
+    background-color: #f5c9d3 !important;
 }
 </style>
 """, unsafe_allow_html=True)
